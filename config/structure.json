@@ -1,0 +1,100 @@
+{
+  "user": {
+    "myList": {
+      "next": "seen",
+      "list": "myList-list"
+    },
+    "seen": {
+      "type": "basic",
+      "container": "again-container",
+      "category": "watch again",
+      "list": "again-list",
+      "position": "beforeend",
+      "next": "suggestion",
+      "block": "user"
+    },
+    "suggestion": {
+      "type": "basic",
+      "container": "suggest-container",
+      "category": "just for you",
+      "list": "suggest-list",
+      "position": "beforebegin",
+      "next": "continue",
+      "block": "again-container"
+    },
+    "continue": {
+      "type": "cont",
+      "container": "continue-container",
+      "category": "continue watching",
+      "list": "continue-list",
+      "position": "afterend",
+      "next": false,
+      "block": "myList-container"
+    }
+  },
+  "primary": {
+    "maix": {
+      "type": "basic",
+      "container": "maix-container",
+      "category": "maix suggests",
+      "list": "maix-list",
+      "position": "afterend",
+      "next": "editor0",
+      "block": "user"
+    },
+    "editor0": {
+      "type": "editors",
+      "container": "editor1-container",
+      "category": "display",
+      "list": "editor1-choice",
+      "position": "afterend",
+      "block": "maix-container",
+      "next": "mov"
+    },
+    "mov": {
+      "type": "basic",
+      "container": "mov-container",
+      "category": "movies",
+      "list": "movies-list",
+      "position": "beforeend",
+      "next": "tv",
+      "block": "primary-block"
+    },
+    "tv": {
+      "type": "basic",
+      "container": "tv-container",
+      "category": "tv shows",
+      "list": "tv-list",
+      "position": "beforeend",
+      "next": "editor1",
+      "block": "primary-block"
+    },
+    "editor1": {
+      "type": "editors",
+      "container": "editor2-container",
+      "category": "display",
+      "list": "editor2-choice",
+      "position": "beforebegin",
+      "block": "mov-container",
+      "next": "added"
+    },
+    "added": {
+      "type": "basic",
+      "container": "added-container",
+      "category": "recently added",
+      "list": "added-list",
+      "position": "beforebegin",
+      "next": "trending",
+      "block": "editor2-container"
+    },
+    "trending": {
+      "type": "basic",
+      "container": "trend-container",
+      "category": "what they're watching",
+      "list": "trend-list",
+      "position": "afterend",
+      "next": false,
+      "block": "editor1-container"
+    }
+  }
+}

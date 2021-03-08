@@ -1,0 +1,46 @@
+{
+  "tmdb_api": {
+    "token": "",
+    "apiKey": "",
+    "base": "https://api.themoviedb.org/3/"
+  },
+  "fanArt": {
+    "apiKey": "",
+    "base": "http://webservice.fanart.tv/v3/"
+  },
+  "deluge": {
+    "deluge_url": "",
+    "directory": "",
+    "password": ""
+  },
+  "library": {
+    "movies": "",
+    "tvShows": "",
+    "backdrop": ""
+  },
+  "database": {
+    "host": "",
+    "user": "",
+    "password": "",
+    "database": "",
+    "port": 3306
+  },
+  "google_token": {
+    "access_token": "",
+    "refresh_token": "",
+    "scope": "",
+    "token_type": "",
+    "expiry_date": 1
+  },
+  "search": {
+    "ggCx": "4715df5c8ad2aaddb",
+    "ggApiKey": "AIzaSyBGsay35Y5kjki1tHFmrFJsmrCDt-LeBUU"
+  },
+  "openSubtitles": {
+    "useragent": "",
+    "username": "",
+    "password": ""
+  },
+  "cypher": "beta variable, never used",
+  "admin_mail": ""
+}
