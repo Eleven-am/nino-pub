@@ -1,0 +1,268 @@
+body {
+    padding: 0;
+    margin: 0;
+    background: rgba(1, 16, 28, 0.6);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+body::-webkit-scrollbar,
+.editors-list::-webkit-scrollbar,
+.basic-list::-webkit-scrollbar,
+#info-list::-webkit-scrollbar {
+    display: none;
+}
+
+#background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 105%;
+    overflow: no-content;
+    background: linear-gradient(rgba(1, 16, 28, 0.8), #01101c);
+    z-index: -1;
+}
+
+#secondary-block {
+    position: fixed;
+    width: 20%;
+    height: 100%;
+    top: 0;
+    left: -20%;
+    background: rgba(1, 16, 28, 0.7);
+    transition: all ease-in-out .4s;
+}
+
+#sidebar {
+    width: 100%;
+    padding: 0;
+    margin: 20% 0 0 0;
+    list-style: none;
+    font-size: large;
+}
+
+#sidebar li {
+    opacity: 0;
+    margin: 0 10% 10px 20%;
+    animation: glow_text 1s steps(1000);
+    animation-fill-mode: forwards;
+    cursor: pointer;
+}
+
+#sidebar li:hover {
+    color: #d9eeff;
+    transition: all ease-in-out .2s;
+}
+
+#branding {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+    margin-top: 2%;
+}
+
+#branding p {
+    margin: 0;
+}
+
+
+@keyframes fade_img {
+    from {
+        opacity: 0.4
+    }
+    to {
+        opacity: 0
+    }
+}
+
+@keyframes glow_img {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 0.4
+    }
+}
+
+@keyframes glow_text {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}
+
+.fade_img {
+    animation: fade_img 1s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+.glow_img {
+    animation: glow_img 1s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+#background img {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    object-fit: cover;
+    transition: opacity 1s ease-in-out;
+}
+
+#branding img {
+    width: 40px;
+    height: 40px;
+}
+
+.basic-span span, #logo, #recent-span, .person-span, #logo-v2, #sidebar, #search-div,
+#search-result span, .randLabel, .recent-div .img2, #logout-container, #downloadContainer {
+    font-family: "Baloo 2", cursive;
+    color: #fff;
+    text-shadow: 2px 2px 8px rgba(1, 16, 28, 0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+#loader-background .img1 {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .2;
+}
+
+#loader-background .img2 {
+    position: fixed;
+    display: block;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4vw;
+}
+
+#loader-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 105%;
+    overflow: no-content;
+    background: linear-gradient(rgba(1, 16, 28, .7), #01101c);
+    z-index: 99;
+}
+
+#load-enforcer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 105%;
+    overflow: no-content;
+    background: #01101c;
+    z-index: 99;
+}
+
+.fadeLoader {
+    animation: fadeLoader 1s;
+    animation-fill-mode: forwards;
+}
+
+.showLoader {
+    animation: showLoader .2s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes showLoader {
+    0% {
+        opacity: 0;
+        visibility: hidden;
+        z-index: -1;
+    }
+    100% {
+        opacity: 1;
+        visibility: visible;
+        z-index: 99;
+    }
+}
+
+@keyframes fadeLoader {
+    100% {
+        opacity: 0;
+        visibility: hidden;
+        z-index: -1;
+    }
+}
+
+#sideHover {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 4%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all ease-in-out .4s;
+}
+
+#pane {
+    background: rgba(1, 16, 28, 0.7);
+    border-right: 1px solid #d9eeff;
+    width: 30%;
+    height: 100%;
+}
+
+#pick {
+    width: 70%;
+    background: rgba(1, 16, 28, 0.7);
+    border-right: 1px solid #d9eeff;
+    border-top: 1px solid #d9eeff;
+    border-bottom: 1px solid #d9eeff;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+#pick svg {
+    fill: none;
+    stroke: #d9eeff;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+#search-div svg {
+    margin-left: 3%;
+    width: 7%;
+    stroke-width: 3;
+    cursor: pointer;
+}
+
+#search-div {
+    margin: 2%;
+    display: flex;
+    width: 94%;
+    font-size: 20px;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+    color: rgba(217, 238, 255, 0.5);
+    stroke: rgba(217, 238, 255, 0.5);
+    border: 2px solid rgba(217, 238, 255, 0.5);
+    transition: all ease-in-out .2s;
+    cursor: pointer;
+}
+
+#search-div:hover {
+    stroke: #d9eeff;
+    border-color: #d9eeff;
+    color: #d9eeff;
+}

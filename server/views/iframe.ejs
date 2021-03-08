@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+    <link rel="manifest" href="favicons/site.webmanifest">
+    <link rel="mask-icon" href="favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="favicons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/favicons/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- css styles -->
+    <link rel="stylesheet" href="styles/body.css">
+    <link rel="stylesheet" href="styles/videostyle.css">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Barlow+Condensed&display=swap" rel="stylesheet">
+
+    <!-- Primary Meta Tags -->
+    <title><%= name %></title>
+    <meta name="title" content="<%= name %>">
+    <meta name="description" content="<%= overview %>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= link %>">
+    <meta property="og:title" content="<%= name %>">
+    <meta property="og:description" content="<%= overview %>">
+    <meta property="og:image" content="<%= poster %>">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="<%= link %>">
+    <meta property="twitter:title" content="<%= name %>">
+    <meta property="twitter:description" content="<%= overview %>">
+    <meta property="twitter:image" content="<%= poster %>">
+</head>
+<body>
+
+<!-- The preload div -->
+<div id="loader-background" class="showLoaderTwo">
+    <div id="load-enforcer">
+        <img class="img1" src="src/ninoback.jpg">
+        <img class="img2" src="src/loading.gif" alt="">
+    </div>
+</div>
+
+
+<!-- Video block -->
+<div id="video-block">
+    <div class="video-container">
+        <video preload="metadata"></video>
+        <img src="" id="previewFrame">
+        <div id="foncer"></div>
+        <div class="controls-container">
+            <svg id="back-button" viewBox="0 0 512 512">
+                <path d="M256,0C114.844,0,0,114.844,0,256s114.844,256,256,256s256-114.844,256-256S397.156,0,256,0z M256,490.667
+				C126.604,490.667,21.333,385.396,21.333,256S126.604,21.333,256,21.333S490.667,126.604,490.667,256S385.396,490.667,256,490.667
+				z"/>
+                <path d="M394.667,245.333H143.083l77.792-77.792c4.167-4.167,4.167-10.917,0-15.083c-4.167-4.167-10.917-4.167-15.083,0l-96,96
+				c-4.167,4.167-4.167,10.917,0,15.083l96,96c2.083,2.083,4.813,3.125,7.542,3.125c2.729,0,5.458-1.042,7.542-3.125
+				c4.167-4.167,4.167-10.917,0-15.083l-77.792-77.792h251.583c5.896,0,10.667-4.771,10.667-10.667S400.563,245.333,394.667,245.333
+				z"/>
+            </svg>
+            <div id="volume-container">
+                <svg viewBox="0 0 24 24" id="volume">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                <div id="volume-groove">
+                    <div id="volume-fill"></div>
+                    <div id="volume-head"></div>
+                </div>
+            </div>
+
+            <div class="content-image"></div>
+            <div class="controls">
+                <button class="rewind">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12.5,3C17.15,3 21.08,6.03 22.47,10.22L20.1,11C19.05,7.81 16.04,5.5 12.5,5.5C10.54,5.5 8.77,6.22 7.38,7.38L10,10H3V3L5.6,5.6C7.45,4 9.85,3 12.5,3M10,12V22H8V14H6V12H10M18,14V20C18,21.11 17.11,22 16,22H14A2,2 0 0,1 12,20V14A2,2 0 0,1 14,12H16C17.11,12 18,12.9 18,14M14,14V20H16V14H14Z"/>
+                    </svg>
+                </button>
+                <button id="play-pause">
+                    <svg id="playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <svg id="paused" viewBox="0 0 24 24">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                </button>
+                <button class="fast-forward">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10,12V22H8V14H6V12H10M18,14V20C18,21.11 17.11,22 16,22H14A2,2 0 0,1 12,20V14A2,2 0 0,1 14,12H16C17.11,12 18,12.9 18,14M14,14V20H16V14H14M11.5,3C14.15,3 16.55,4 18.4,5.6L21,3V10H14L16.62,7.38C15.23,6.22 13.46,5.5 11.5,5.5C7.96,5.5 4.95,7.81 3.9,11L1.53,10.22C2.92,6.03 6.85,3 11.5,3Z"/>
+                    </svg>
+                </button>
+                <div class="progress-controls">
+                    <div class="time-remaining" id="timeSeen">00:00</div>
+                    <div class="progress-bar">
+                        <div class="watched-bar"></div>
+                        <div class="playhead"></div>
+                    </div>
+                    <div class="time-remaining" id="time-left">00:00</div>
+                </div>
+                <button class="next" id="nextButton">
+                    <svg viewBox="0 0 24 24">
+                        <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                        <line x1="19" y1="5" x2="19" y2="19"></line>
+                    </svg>
+                </button>
+                <button id="sub-button">
+                    <svg height="512pt" viewBox="0 -71 512 512" width="512pt">
+                        <path d="m407 0h-302c-57.898438 0-105 47.101562-105 105v160.679688c0 57.894531 47.101562 105 105 105h302c57.898438 0 105-47.105469 105-105v-160.679688c0-57.898438-47.101562-105-105-105zm75 265.679688c0 41.351562-33.644531 75-75 75h-302c-41.355469 0-75-33.648438-75-75v-160.679688c0-41.355469 33.644531-75 75-75h302c41.355469 0 75 33.644531 75 75zm0 0"/>
+                        <path d="m399.804688 117.316406h-197.113282c-8.285156 0-15 6.714844-15 15s6.714844 15 15 15h197.113282c8.285156 0 15-6.714844 15-15s-6.714844-15-15-15zm0 0"/>
+                        <path d="m112.195312 147.316406h45.722657c8.285156 0 15-6.714844 15-15s-6.714844-15-15-15h-45.722657c-8.285156 0-15 6.714844-15 15s6.714844 15 15 15zm0 0"/>
+                        <path d="m112.195312 200.339844h197.113282c8.285156 0 15-6.71875 15-15 0-8.285156-6.714844-15-15-15h-197.113282c-8.285156 0-15 6.714844-15 15 0 8.28125 6.714844 15 15 15zm0 0"/>
+                        <path d="m399.804688 170.339844h-45.722657c-8.285156 0-15 6.714844-15 15 0 8.28125 6.714844 15 15 15h45.722657c8.285156 0 15-6.71875 15-15 0-8.285156-6.714844-15-15-15zm0 0"/>
+                        <path d="m399.804688 223.359375h-197.113282c-8.285156 0-15 6.71875-15 15 0 8.285156 6.714844 15 15 15h197.113282c8.285156 0 15-6.714844 15-15 0-8.28125-6.714844-15-15-15zm0 0"/>
+                        <path d="m157.917969 223.359375h-45.722657c-8.285156 0-15 6.71875-15 15 0 8.285156 6.714844 15 15 15h45.722657c8.285156 0 15-6.714844 15-15 0-8.28125-6.714844-15-15-15zm0 0"/>
+                    </svg>
+                </button>
+                <button class="full-screen">
+                    <svg class="maximize" viewBox="0 0 24 24">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                        </path>
+                    </svg>
+                    <svg class="minimize" viewBox="0 0 24 24">
+                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="video-info">
+            <div class="information">
+                <label id="video-title"></label>
+                <div class="spacer"></div>
+                <span id="episodeName"></span>
+                <div class="spacer"></div>
+                <span id="video-deets"></span>
+            </div>
+        </div>
+
+        <img id="buffering" src="src/loading.gif">
+        <svg id="playFlash" viewBox="0 0 494.148 494.148">
+            <g>
+                <path d="M405.284,201.188L130.804,13.28C118.128,4.596,105.356,0,94.74,0C74.216,0,61.52,16.472,61.52,44.044v406.124
+            c0,27.54,12.68,43.98,33.156,43.98c10.632,0,23.2-4.6,35.904-13.308l274.608-187.904c17.66-12.104,27.44-28.392,27.44-45.884
+            C432.632,229.572,422.964,213.288,405.284,201.188z" data-original="#000000" class="active-path"
+                      data-old_color="#000000"/>
+            </g>
+        </svg>
+        <svg id="pauseFlash" viewBox="0 0 24 24">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+        <div id="skip-recap">Skip Recap</div>
+
+        <div id="upNextContainer">
+            <div id="upNext">
+                <img src="images/meta" alt="meta" id="upNextImg">
+                <span id="countDown"></span>
+                <ul id="upNextInfo">
+                    <li id="upNextTitle">Feature not available</li>
+                    <li id="upNextOverview">To see and play what's up next, consider authenticating with nino</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="sub-window">
+            <ul id="sub-list">
+                <li id="nan">None</li>
+                <div class="sub-divider"></div>
+                <li id="eng" data-id="en" style="display: none" class="subs">English</li>
+                <div class="sub-divider"></div>
+                <li id="fre" data-id="fr" style="display: none" class="subs">French</li>
+                <div class="sub-divider"></div>
+                <li id="ger" data-id="de" style="display: none" class="subs">German</li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+</body>
+
+<!-- The Javascript dependencies -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" src="scripts/iframe.js"></script>
+</html>

@@ -1,0 +1,117 @@
+body {
+    background: #2b3940;
+    color: white;
+    margin: 0;
+    padding: 0;
+}
+
+input, select {
+    width: 100%;
+    height: 30px;
+    outline: 0;
+    margin: 7px 0;
+    background: rgba(1, 16, 28, 0.1);
+    border-radius: 10px;
+    border: 2px solid #fff;
+    color: #fff;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+
+#top {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor {
+    width: 40vw;
+}
+
+#category {
+    margin-left: 20%;
+    width: 60%;
+    text-align: center;
+}
+
+#span-div {
+    padding: 4px;
+    margin: 2vh;
+    border: 2px solid white;
+    width: 10%;
+    cursor: pointer;
+}
+
+#span-div:hover {
+    color: #d9eeff;
+    border-color: #d9eeff;
+}
+
+#search-output {
+    display: none;
+    position: absolute;
+    width: 59.4%;
+    max-height: 50%;
+    overflow: scroll;
+    top: 25%;
+    left: 20.3%;
+    background: rgba(1, 16, 28, 0.7);
+    border-radius: 1vw;
+    border: 2px solid rgba(1, 16, 28, 0.9);
+}
+
+#search-result {
+    list-style: none;
+    padding: 2%;
+    margin: 0;
+}
+
+#search-result img {
+    width: auto;
+    height: 5vh;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    margin-right: 3%;
+    transition: all 0.2s ease-in-out;
+}
+
+#search-result li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 5px 0;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+#search-result li:hover span {
+    color: rgba(217, 238, 255, 0.9);
+}
+
+#search-result li:hover img {
+    border: 1px solid rgba(217, 238, 255, 0.9);
+    transform: scale(1.07);
+}
+
+.output-grid img {
+    width: 240px;
+    height: auto;
+    border: 2px solid rgba(0, 0, 0, 0);
+    border-radius: 10px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.output-grid {
+    display: flex;
+    justify-content: flex-start;
+    list-style: none;
+    padding: 0;
+}
+
+.output-grid li:hover img {
+    border: 2px solid #d9eeff;
+}

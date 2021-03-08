@@ -1,0 +1,111 @@
+body {
+    background: #2b3940;
+    color: white;
+    margin: 0;
+    padding: 0;
+}
+
+.title {
+    width: 100%;
+    text-align: center;
+    background: #2b3940;
+    padding: 20px;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+}
+
+.title button {
+    font-size: x-large;
+    padding: 0 10px;
+    background: #2b3940;
+    border: 2px solid seashell;
+    color: seashell;
+    cursor: pointer;
+}
+
+.title button:hover {
+    color: #d9eeff;
+    border: 2px solid #d9eeff;
+}
+
+.title div {
+    text-align: center;
+    padding: 7px;
+    font-size: x-large;
+    cursor: pointer;
+    background: #2b3940;
+    border: 2px solid seashell;
+}
+
+.title div:hover {
+    color: #d9eeff;
+    border: 2px solid #d9eeff;
+}
+
+#result {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#result li {
+    height: 20vh;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border: 2px rgba(0, 0, 0, 0);
+}
+
+#result div {
+    margin: 10px;
+}
+
+#result li:hover {
+    border: 2px solid seashell;
+    cursor: pointer;
+}
+
+#result li img {
+    width: 160px;
+    height: 90px;
+    margin: 10px;
+}
+
+#manual {
+    position: fixed;
+    top: 28%;
+    width: 80%;
+    left: 10%;
+    height: 40%;
+}
+
+.input-manual {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.input-manual label {
+    width: 60%;
+}
+
+#manual img {
+    width: 240px;
+    height: auto;
+    max-height: 160px;
+}
+
+#manual input {
+    width: 100%;
+    height: 30px;
+    outline: 0;
+    margin: 7px 0;
+    background: rgba(1, 16, 28, 0.1);
+    border-radius: 10px;
+    border: 2px solid #fff;
+    color: #fff;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}

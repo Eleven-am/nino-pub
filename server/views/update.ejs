@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>update nino</title>
+
+    <!-- favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+    <link rel="manifest" href="favicons/site.webmanifest">
+    <link rel="mask-icon" href="favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="favicons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/favicons/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- css styles -->
+    <link rel="stylesheet" href="styles/update.css">
+</head>
+<body>
+<div class="title">
+    <button id="movie">Movies</button>
+    <h2 id="title-text">nino</h2>
+    <button id="tv">TV Shows</button>
+</div>
+<div class="title">
+    <div id="update-db">Update db</div>
+    <div id="auto">auto scan</div>
+    <div id="tmdb_id">input tmdb_id</div>
+    <div id="delete">delete entry</div>
+    <div id="editor">go to editor page</div>
+    <div id="null">Not available</div>
+</div>
+<!-- div class="title" id="hide">
+    <div id="subs">scan subs</div>
+    <div id="nextDown">scan for download</div>
+    <div id="info_id">find by name</div>
+    <div id="suggest">get suggestions for download</div>
+    <div id="magnet">go to magnet page</div>
+</div -->
+<br>
+<ul id="result"></ul>
+<div style="display: none;" id="manual">
+    <div id="inner-manual">
+        <span id="manual-overview">Four undying warriors who've secretly protected humanity for centuries become targeted for their mysterious powers just as they discover a new immortal.</span>
+        <div style="display: flex; justify-content: space-around; align-items: center; font-size: large; font-weight: bolder">
+            <p id="manual-name">The Old Guard</p>
+            <p id="manual-id">547016</p>
+        </div>
+    </div>
+    <div class="input-manual">
+        <label>
+            Poster
+            <input type="text" id="poster" name="poster">
+        </label>
+        <img src="" id="poster-img">
+    </div>
+    <div class="input-manual">
+        <label>
+            Logo
+            <input type="text" id="logo" name="logo">
+        </label>
+        <img src="" id="logo-img">
+    </div>
+    <div class="input-manual">
+        <label>
+            Backdrop
+            <input type="text" id="backdrop" name="backdrop">
+        </label>
+        <img src="" id="backdrop-img">
+    </div>
+
+    <h3 id="manual-done" style="text-align: center; border: 2px solid white; padding: 2px">done</h3>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script type="text/javascript" src="scripts/update.js"></script>
+</body>
+
+
+
