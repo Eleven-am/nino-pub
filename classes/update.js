@@ -14,11 +14,11 @@ const {
     getCollection
 } = require('../base/tmdb-hook')
 const OS = require('opensubtitles-api')
-const {useragent, password, username} = require('../config/nino.json').openSubtitles
+/*const {useragent, password, username} = require('../config/nino.json').openSubtitles
+const OpenSubtitles = new OS({useragent, username, password, ssl: true});*/
 const rename = require('locutus/php/strings/strtr')
 const {log, aJax, sFetch} = require("../base/baseFunctions")
 const {movies, tvShows, backdrop} = require('../config/nino.json').library
-const OpenSubtitles = new OS({useragent, username, password, ssl: true});
 const drive = new DriveHandler();
 const logFile = 'update';
 

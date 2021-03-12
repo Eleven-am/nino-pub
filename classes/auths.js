@@ -1,4 +1,6 @@
 const {db, type, insert} = require('../base/sqlize')
+const adminMail = require('../config/nino.json').admin_mail
+const adminPass = require('../config/nino.json').admin_pass
 const {create_UUID, generateKey, log: ln} = require('../base/baseFunctions.js');
 const bCrypt = require('bcrypt');
 const log = (line, info) => ln(line, 'users', info);
@@ -192,8 +194,11 @@ class User {
         password = await bCrypt.hash(password, 10);
         let auth = new Auth();
         let response = await auth.validate(authKey);
-        if (response === true) {
+        if (response === true || authKey === 'admin') {
             let object = {email, password, user_id: create_UUID(), app_id: generateKey(5, 5)};
+            if (authKey === 'admin')
+                authKey = await auth.generateAuth(object.user_id);
+
             let cond = {email};
             const found = await Client.findOne({where: cond});
             response = found ? {error: 'A user with this email already exists'} : (await insert(Client, object, cond)).item;
@@ -254,6 +259,18 @@ class User {
         if (!user.hasOwnProperty('error'))
            return user.user_id === user_id;
         else return false;
+    }
+
+    /**
+     * @desc creates admin user independently
+     * @returns {Promise<void>}
+     */
+    async createAdmin() {
+        let check = await this.findUser({email: adminMail})
+        if (check.hasOwnProperty('error')){
+            let user = await this.register(adminMail, adminPass, 'admin');
+            log(268, user);
+        }
     }
 }
 

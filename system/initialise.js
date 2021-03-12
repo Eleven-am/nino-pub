@@ -64,7 +64,7 @@ const init = async logger => {
         if (check) {
             log(44, 'building MySQL environment');
             const obj = require('../config/nino.json').database;
-            let check2 = await makeCONN(obj);
+            check2 = await makeCONN(obj);
             if (check2)
                 log(61, 'MySQL runtime environment generated');
             else
@@ -127,6 +127,7 @@ const init = async logger => {
     info += check3 ? '' : " credentials";
     info += check4 ? '' : " structure";
 
+    console.log(info);
     let file = info === '' ? 'def' : 'setup';
     return info === '' ? true : {file, info};
 }

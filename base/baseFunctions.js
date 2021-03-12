@@ -74,7 +74,7 @@ const sFetch = async (url, head) => {
     head = head || false;
     return await fetch(url)
         .then(response => {
-            return head === true || response.status > 207 ? response.headers : response.json();
+            return head === true || response.status > 207 ? {headers: response.headers} : response.json();
         }).catch(reason => {
             console.log(reason);
             return false;
