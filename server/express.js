@@ -3,18 +3,18 @@ const app = express()
 const path = require("path")
 const compression = require('compression')
 const cors = require('cors')
-const {Client} = require("../classes/meta")
-const client = new Client();
-
-const logIP = async (req, res, next) => {
-    let addr = req.headers['x-real-ip'] ? req.headers['x-real-ip']: req.ip;
-    let request = 'https://' + req.get('Host') + req.url;
-    await client.logIp(addr, request);
-    next();
-}
 
 module.exports = initialised => {
     if (initialised === true || !initialised.info.includes('database')){
+        const {Client} = require("../classes/meta")
+        const client = new Client();
+
+        const logIP = async (req, res, next) => {
+            let addr = req.headers['x-real-ip'] ? req.headers['x-real-ip']: req.ip;
+            let request = 'https://' + req.get('Host') + req.url;
+            await client.logIp(addr, request);
+            next();
+        }
         const options = require('../config/nino.json').database;
         const session = require('express-session')
         const MySQLStore = require('express-mysql-session')(session)

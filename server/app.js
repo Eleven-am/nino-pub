@@ -5,9 +5,9 @@ const init = require('../system/initialise');
     let initialised = await init(false);
     const app = require('./express')(initialised);
     const render = require('./render');
-    const {User} = require("../classes/auths");
 
-    if (initialised) {
+    if (!initialised.hasOwnProperty('file')) {
+        const {User} = require("../classes/auths");
         app.use('/auth', require('./routes/auth'));
         app.use('/info', require('./routes/info'));
         app.use('/images', require('./routes/images'));

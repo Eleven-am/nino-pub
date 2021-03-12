@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 let {log: ln, change} = require("../base/baseFunctions")
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 
 /**
  * @desc verifies that the file requested exists
@@ -17,6 +17,22 @@ const exists = async item => {
                 resolve(false);
         });
     });
+}
+
+const makeCONN = async obj => {
+    return new Promise(resolve => {
+        const {host, user, password, database, port} = obj;
+        const connection =  mysql.createConnection({host, port, user, password});
+        connection.query(
+            `CREATE DATABASE IF NOT EXISTS ${database};`,
+            function(err, fields) {
+                if (err)
+                    resolve(false)
+                else
+                    resolve(true)
+            }
+        );
+    })
 }
 
 const init = async logger => {
@@ -47,10 +63,8 @@ const init = async logger => {
 
         if (check) {
             log(44, 'building MySQL environment');
-            const {host, user, password, database, port} = require('../config/nino.json').database;
-            const connection = await mysql.createConnection({host, port, user, password});
-            let response = await connection.query(`CREATE DATABASE IF NOT EXISTS ${database};`);
-            check2 = response[0].warningStatus < 2;
+            const obj = require('../config/nino.json').database;
+            let check2 = await makeCONN(obj);
             if (check2)
                 log(61, 'MySQL runtime environment generated');
             else
