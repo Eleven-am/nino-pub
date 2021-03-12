@@ -75,6 +75,12 @@ class SpringBoard extends Views {
         if (!tmdb_id){
             let table = `${type}s WHERE name like "${name}%"`;
             let item = await queryDB('*', table);
+            item = item.map(entry => {
+                let temp = entry;
+                temp.diff = entry.name.levenstein(name);
+                return temp;
+            }).sortKey('diff', true);
+            item = item.length ? item[0]: null;
             return item.length ? item[0]: {error: 'No such item exists'};
 
         } else {
@@ -208,6 +214,11 @@ class SpringBoard extends Views {
         if (type === "movie" || type === "show") {
             let table = `${type}s WHERE name like "${value}%"`;
             let item = await queryDB('*', table);
+            item = item.map(entry => {
+                let temp = entry;
+                temp.diff = entry.name.levenstein(value);
+                return temp;
+            }).sortKey('diff', true);
             item = item.length ? item[0]: null;
             if (item) {
                 let {overview} = await getDetails(item.type, item.tmdb_id);
