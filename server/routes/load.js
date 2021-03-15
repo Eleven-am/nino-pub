@@ -56,7 +56,7 @@ router.get('/:type', async (req, res) => {
 
         else {
             response.data = await spring.getList(req.params.type);
-            response.category = response.category === 'display' ? response.data[0].display : response.category;
+            response.category = response.category === 'display' || response.data.hasOwnProperty('error')? response.data.hasOwnProperty('error')?  response.data.error : response.data[0].display : response.category;
         }
 
     }

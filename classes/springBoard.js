@@ -191,7 +191,13 @@ class SpringBoard extends Views {
             movies = movies.concat(shows);
             return movies.randomiseDB(movies.length, 0, 3);
 
-        } else return [];
+        } else if (movies.length)
+            return movies.splice(0, 5);
+
+        else if (shows.length)
+            return shows.splice(0, 5);
+
+        else return [];
     }
 
     /**

@@ -420,19 +420,20 @@ const loadList = (blobs, element) => {
 }
 
 const loadChoice = (blobs, element) => {
-    element.innerHTML = blobs.map(file => `
-        <li class="info" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}" data-id="${file.trailer}">
-            <div class="editors-inner-div">
-                <div class="editors-img">
-                    <img class="editors-backdrop" src="${file.backdrop}" id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
-                    ${file.logo !== '' ? `<img class="editors-logo" src="${file.logo}" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">` : `<span class="editors-label">${file.name}</span>`}
+    if (!blobs.hasOwnProperty('error'))
+        element.innerHTML = blobs.map(file => `
+            <li class="info" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}" data-id="${file.trailer}">
+                <div class="editors-inner-div">
+                    <div class="editors-img">
+                        <img class="editors-backdrop" src="${file.backdrop}" id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
+                        ${file.logo !== '' ? `<img class="editors-logo" src="${file.logo}" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">` : `<span class="editors-label">${file.name}</span>`}
+                    </div>
+                    <div class="editors-info-div">
+                        <span>${file.overview}</span>
+                    </div>
                 </div>
-                <div class="editors-info-div">
-                    <span>${file.overview}</span>
-                </div>
-            </div>
-        </li>
-    `).join('');
+            </li>
+        `).join('');
 }
 
 const buildInfo = info => {
