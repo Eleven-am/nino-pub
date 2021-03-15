@@ -666,7 +666,7 @@ class Update /*extends Magnet */{
                             let obj = {sub: upd.item.movie_id, type: 1};
                             let check = await Sub.findAll();
                             await Sub.create(obj);
-                            if (check.length < 1) await this.loadSubs();
+                            //if (check.length < 1) await this.loadSubs();
                         }
                     }
                 }
