@@ -23,7 +23,7 @@ const suggest = document.getElementById("suggest");
 const subs = document.getElementById("subs");
 const magnet = document.getElementById("magnet");*/
 const editor = document.getElementById("editor");
-const hide = document.getElementById("hide");
+//const hide = document.getElementById("hide");
 const deleteEntry = document.getElementById("delete");
 const manual = {
     block: document.getElementById("manual"),
@@ -69,7 +69,7 @@ Array.prototype.search = function (value) {
 
 $("#movie").on("click", async () => {
     libType = "movie";
-    hide.style.display = 'none';
+    //hide.style.display = 'none';
     title.innerText = 'scanning...';
     let response = await sFetch("update/scan/movie");
     result.style.display = "block";
@@ -80,7 +80,7 @@ $("#movie").on("click", async () => {
 $("#tv").on("click", async () => {
     libType = "tv";
     title.innerText = 'scanning...';
-    hide.style.display = 'none';
+    //hide.style.display = 'none';
     let response = await sFetch("update/scan/tv");
     result.style.display = "block";
     manual.block.style.display = "none";
@@ -118,7 +118,7 @@ const explode = async data => {
     } else {
         result.innerHTML = '';
         title.innerText = libType + " library scan complete";
-        hide.removeAttribute('style');
+        //hide.removeAttribute('style');
     }
 };
 

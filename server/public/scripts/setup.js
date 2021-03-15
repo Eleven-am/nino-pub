@@ -146,9 +146,9 @@ const loadSQL = () => {
                 <div id="login-holder">
                     <ul id="login-list">
                         <li>host</li>
-                        <li>database</li>
                         <li>username</li>
                         <li>password</li>
+                        <li>database</li>
                         <li>port</li>
                     </ul>
                     <div id="login-form">
