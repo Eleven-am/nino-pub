@@ -186,6 +186,7 @@ const ninoPlayer = {
 const search = {
     bool: false,
     doneTyping: null,
+    form: document.getElementById('search-form'),
     input: document.getElementById("search-input"),
     result: document.getElementById("search-result"),
     output: document.getElementById("search-output")
@@ -257,7 +258,7 @@ const manageHistory = async (object, boot) => {
         document.title = "\u25B6 " + name;
     }
 
-    if (object.type === 'iframe'){
+    if (object.type === 'iframe') {
         let response = await sFetch("iframe/decrypt/" + object.value);
         let upNext = await sFetch("watch/upNext/" + response.next);
         let name = response.episodeName !== undefined ? response.episodeName : response.name;
@@ -846,6 +847,33 @@ const loadModals = (object, callback) => {
     });
 }
 
+const slideView = direction => {
+    let array = [];
+    let searchResult = document.querySelectorAll('.searchRes');
+    if (direction === 'down') {
+        array.push(searchResult.length - 1);
+        for (let i = 0; i < searchResult.length - 1; i++)
+            array.push(i)
+
+    } else if (direction === 'up') {
+        for (let i = 1; i < searchResult.length; i++)
+            array.push(i)
+        array.push(0);
+    }
+
+    for (let i = 0; i < array.length; i++) {
+        for (let j = 0; j < array.length; j++) {
+            if (i === array[j]) {
+                search.result.appendChild(searchResult[j]);
+                break;
+            }
+        }
+    }
+
+    searchResult = document.querySelectorAll('.searchRes');
+    searchResult[0].setAttribute('id', 'searchHover');
+}
+
 $(document).ready(async function () {
     if (window.history.state !== null)
         manageHistory(window.history.state, true)
@@ -918,7 +946,7 @@ $(document).on("click", ".episodes", async e => {
 
     let url = "info/episodes/" + ssd.info_id + "/" + link.replace("Season ", "");
     let response = await sFetch(url);
-    if (infoBlock.closeSeason.style.display !== "none"){
+    if (infoBlock.closeSeason.style.display !== "none") {
         if (!response.hasOwnProperty('error'))
             infoBlock.suggestion.innerHTML = response.map(item => `
                 <li class="play" data-id="e${item.id}">
@@ -991,10 +1019,29 @@ logout.confirm.onclick = () => {
 
 infoBlock.closeSeason.onclick = () => handleOptions("Seasons");
 
-search.input.addEventListener('keyup', async function () {
-    await searchRes(search.input.value)
-    clearTimeout(search.doneTyping);
-    search.doneTyping = setTimeout(showImages, 500);
+search.input.addEventListener('keyup', async function (event) {
+    let searchResult = document.querySelectorAll('.searchRes');
+    if (event.code === 'ArrowUp') {
+        if (searchResult.length) {
+            if (document.getElementById('searchHover'))
+                document.getElementById('searchHover').removeAttribute('id')
+
+            slideView('up')
+        }
+
+    } else if (event.code === 'ArrowDown') {
+        if (searchResult.length) {
+            if (document.getElementById('searchHover'))
+                document.getElementById('searchHover').removeAttribute('id')
+
+            slideView('down')
+        }
+
+    } else {
+        await searchRes(search.input.value)
+        clearTimeout(search.doneTyping);
+        search.doneTyping = setTimeout(showImages, 500);
+    }
 });
 
 search.input.addEventListener('keydown', function () {
@@ -1112,6 +1159,15 @@ window.addEventListener("popstate", async e => {
     await manageHistory(e.state);
 });
 
+search.form.onsubmit = ev => {
+    ev.preventDefault();
+    let search = document.querySelectorAll('.searchRes');
+    if (search.length)
+        search[0].click();
+    else
+        document.body.click();
+}
+
 document.addEventListener("click", function (event) {
     if (!search.output.contains(event.target) && search.bool && !search.input.contains(event.target)) {
         search.output.style.display = "none";
@@ -1128,4 +1184,3 @@ document.oncontextmenu = (e) => {
 window.ondragstart = function () {
     return false;
 }
-
