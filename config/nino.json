@@ -23,6 +23,7 @@
     "token_type": "",
     "expiry_date": 1
   },
+  "logger": true,
   "admin_mail": "",
   "admin_pass": "",
   "cypher": "",

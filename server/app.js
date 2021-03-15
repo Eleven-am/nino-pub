@@ -1,8 +1,9 @@
 const init = require('../system/initialise');
+let {logger} = require('../config/nino.json');
 
 (async function () {
 
-    let initialised = await init(true);
+    let initialised = await init(logger);
     const app = require('./express')(initialised);
     const render = require('./render');
 

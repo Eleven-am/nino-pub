@@ -444,6 +444,7 @@ const confirmFolders = async () => {
         alert("remember to reload the server afterwards");
         let json = {database, library, tmdb_api, google_token, admin_mail, admin_pass,
             cypher: "",
+            logger: true,
             fanArt: {
             "apiKey": "84a65dfbe1b2441c7d2fe3f54c681cab",
             "base": "http://webservice.fanart.tv/v3/"
