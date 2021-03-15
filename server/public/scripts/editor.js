@@ -100,6 +100,7 @@ submit.onclick = async () => {
     let name = document.getElementById("name").value;
     let display = document.getElementById("info-name").value;
     if (name === "" && document.querySelectorAll('.remove').length) alert("Please enter a category");
+    if (display === "" && document.querySelectorAll('.remove').length) alert("Please enter display info");
     else {
         let blob = [];
         document.querySelectorAll('.remove').forEach(div => {

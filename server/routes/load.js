@@ -59,8 +59,7 @@ router.get('/:type', async (req, res) => {
             response.category = response.category === 'display' || response.data.hasOwnProperty('error')? response.data.hasOwnProperty('error')?  response.data.error : response.data[0].display : response.category;
         }
 
-    }
-    await res.json(response);
+    } await res.json(response);
     if (req.session.user_id && req.params.type === 'suggestion' && running[req.session.user_id] === undefined) {
         running[req.session.user_id] = true;
         let res = await spring.saveSuggestion(req.session.user_id);
