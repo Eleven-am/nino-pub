@@ -65,7 +65,7 @@ const queryDB = async (limit, table) => {
  */
 const exists = async (table, cond, val) => {
     return new Promise(resolve => {
-        let sql = `SELECT * FROM nino.${table} WHERE ${cond} = "${val}"`;
+        let sql = `SELECT * FROM ${table} WHERE ${cond} = "${val}"`;
         connection.query(sql, (err, res) => {
             if (err) {
                 resolve(false);
@@ -108,7 +108,7 @@ const updateDB = async (obj, cond, table) => {
     return new Promise(resolve => {
         const needle = obj.cond;
         delete obj.cond
-        let sql = `UPDATE nino.${table} SET ? WHERE ${cond} = ?`;
+        let sql = `UPDATE ${table} SET ? WHERE ${cond} = ?`;
         connection.query(sql, [obj, needle], (err) => {
             if (err) {
                 console.error(err);
