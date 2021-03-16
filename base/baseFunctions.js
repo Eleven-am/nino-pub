@@ -150,11 +150,12 @@ Array.prototype.uniqueID = function (needle) {
  */
 Array.prototype.randomiseDB = function (length, id, type) {
     let array = [];
-    length = length > this.length -1 ? this.length -1 : length;
+    let temp = this.filter(item => item.tmdb_id !== id && item.type !== type).length;
+    length = length > temp.length ? temp.length : length;
     for (let i = 0; i < length; i++) {
-        let int = Math.floor(Math.random() * this.length);
-        while (array.some(file => file.tmdb_id === this[int].tmdb_id) || this[int].tmdb_id === id || this[int].type === type)
-            int = Math.floor(Math.random() * this.length);
+        let int = Math.floor(Math.random() * temp.length);
+        while (array.some(file => file.tmdb_id === temp[int].tmdb_id))
+            int = Math.floor(Math.random() * temp.length);
 
         array.push(this[int]);
     }
