@@ -150,7 +150,7 @@ Array.prototype.uniqueID = function (needle) {
  */
 Array.prototype.randomiseDB = function (length, id, type) {
     let array = [];
-    let temp = this.filter(item => item.tmdb_id !== id && item.type !== type).length;
+    let temp = this.filter(item => item.tmdb_id !== id && item.type !== type);
     length = length > temp.length ? temp.length : length;
     for (let i = 0; i < length; i++) {
         let int = Math.floor(Math.random() * temp.length);
