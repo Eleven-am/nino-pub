@@ -31,7 +31,6 @@ Entry.sync().catch(err => console.log(err));
 
 class Client {
     async logIp(obj) {
-        console.log(obj)
         let {addr, request} = obj;
         let country, region, city, isp, alias;
         let client = await Entry.findOne({where: {request, addr}});
@@ -62,7 +61,6 @@ class Client {
     }
 
     getClientIp (req) {
-        console.log(req.headers['x-real-ip'], req.headers["X-Forwarded-For"], req.client.remoteAddress, req.ip)
         let request = req.protocol + '://' + req.get('Host') + req.url;
         let addr = req.headers['x-real-ip'] || (req.headers["X-Forwarded-For"] ||
             req.headers["x-forwarded-for"] ||
