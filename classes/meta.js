@@ -33,7 +33,7 @@ class Client {
     async logIp(addr, request) {
         let country, region, city, isp, alias;
         let client = await Entry.findOne({where: {request, addr}});
-        if (!addr.includes("127.0.0.1") && !request.includes('load/') && !addr.includes('192.168')) {
+        if (addr !== '::1' && !addr.includes("127.0.0.1") && !request.includes('load/') && !addr.includes('192.168')) {
             if (client === null) {
                 client = await Entry.findOne({where: {addr}});
                 if (client) {
