@@ -126,7 +126,6 @@ const init = async logger => {
     info += check3 ? '' : " credentials";
     info += check4 ? '' : " structure";
 
-    console.log(info);
     let file = info === '' ? 'def' : 'setup';
     return info === '' ? true : {file, info};
 }
