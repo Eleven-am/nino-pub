@@ -8,12 +8,12 @@ const logFile = "setup";
 
 const {client_secret, client_id, redirect_uris} = credentials.installed;
 const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-const scopes = ['https://www.googleapis.com/auth/drive'];
+const scopes = ['https://www.googleapis.com/auth/drive', "https://www.googleapis.com/auth/drive.readonly"];
 
-const getToken = async () => {
+const getToken = async int => {
     return oAuth2Client.generateAuthUrl({
         access_type: 'offline',
-        scope: scopes,
+        scope: [scopes[int]],
     });
 }
 
@@ -107,10 +107,14 @@ router.post('/testTmdb', async (req, res) => {
 })
 
 router.get('/getToken', async (req, res) => {
-    let response = await getToken();
+    let response = await getToken(0);
     await res.json(response);
 })
 
+router.get('/homeBase', async (req, res) => {
+    let response = await getToken(1);
+    await res.json(response);
+})
 router.post('/genToken', async (req, res) => {
     let token = req.body.token;
     let response = await genToken(token);

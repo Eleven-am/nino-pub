@@ -5,6 +5,10 @@ let google_token;
 let tmdb_api;
 let database;
 let library;
+let homeBase;
+let cypher;
+let admin_mail;
+let admin_pass;
 
 document.getElementById("logo").setAttribute("class", "growOut");
 
@@ -40,8 +44,7 @@ const login = () => {
                     </div>
                 </div>`;
 
-        loadSQL()
-        /*document.getElementById("login-container").style.opacity = "1";
+        document.getElementById("login-container").style.opacity = "1";
         document.getElementById("loader").style.opacity = "0";
         document.getElementById("loader").style.zIndex = "-999";
 
@@ -73,14 +76,25 @@ const login = () => {
 
         const login = async (type, obj) => {
             const data = JSON.stringify(obj);
-            let response = await pFetch("setup/auth/" + type, data);
-            if (response === true) {
-                loadSQL();
+            let response = await pFetch("https://nino-homebase.herokuapp.com/auth/" + type, data);
+            if (response.action !== "failed") {
+                cypher = response.cypher;
+                if (response.data === null) {
+                    document.getElementById("login-container").style.opacity = "0";
+                    document.getElementById("loader").style.opacity = "1";
+                    document.getElementById("loader").style.zIndex = "999";
+                    admin_mail = obj.username;
+                    admin_pass = obj.password;
+                    loadSQL();
+                }
+                else {
+                    response.data.cypher = response.cypher
+                    download(response.data)
+                }
             } else {
-                displayLogError(type, response);
+                displayLogError(type, response.error);
             }
         }
-
 
         loginBlock.login.addEventListener("click", () => {
             loginBlock.submit.attr("data-id", "login");
@@ -107,8 +121,8 @@ const login = () => {
             let password = document.getElementById("log-password");
             if (type === "login") {
                 const obj = {
-                    user: username.value,
-                    pass: password.value
+                    username: username.value,
+                    password: password.value
                 };
                 await login(type, obj);
 
@@ -116,25 +130,21 @@ const login = () => {
                 let confirm = document.getElementById("confirm-password");
                 if (confirm.value === password.value) {
                     const obj = {
-                        user: username.value,
-                        pass: password.value
+                        username: username.value,
+                        password: password.value
                     };
                     await login(type, obj);
-                    setTimeout(() => loadSQL(), 1000)
 
                 } else {
                     displayLogError(type, "Passwords did not match");
                 }
             }
-        })*/
+        })
     }, 1000)
 }
 
 const loadSQL = () => {
     document.getElementById("login-container").innerHTML = '';
-    document.getElementById("login-container").style.opacity = "0";
-    document.getElementById("loader").style.opacity = "1";
-    document.getElementById("loader").style.zIndex = "999";
 
     setTimeout(() => {
         document.getElementById("login-container").innerHTML = `
@@ -265,7 +275,7 @@ const loadTMDB = () => {
                 document.getElementById("login-container").style.opacity = "0";
                 document.getElementById("loader").style.opacity = "1";
                 document.getElementById("loader").style.zIndex = "999";
-                setTimeout(() => loginGoogle(), 1000)
+                setTimeout(() => loginGoogle('homeBase'), 1000)
             }
         };
     }, 1000)
@@ -331,8 +341,8 @@ const loadOpenSubs = () => {
     }, 1000)
 }
 
-const loginGoogle = async () => {
-    let link = await sFetch('setup/getToken');
+const loginGoogle = async string => {
+    let link = await sFetch('setup/' + string);
     document.getElementById("login-container").innerHTML = `<div id="login-info">
             <span id="google-info">I never have access to your data all information is stored on your machine</span>
             <br>
@@ -369,12 +379,19 @@ const loginGoogle = async () => {
             document.getElementById('google').style.borderColor = 'rgba(245, 78, 78, .9)';
 
         } else {
-            google_token = token
             document.getElementById("login-container").innerHTML = '';
             document.getElementById("login-container").style.opacity = "0";
             document.getElementById("loader").style.opacity = "1";
             document.getElementById("loader").style.zIndex = "999";
-            setTimeout(() => buildFolders(), 1000)
+            if (string === 'getToken'){
+                google_token = token;
+                setTimeout(() => buildFolders(), 1000)
+            } else {
+                homeBase = token;
+                alert('for your security, nino creates two access to your account. One as read only which you just signed in as and the other as full access which would be needed to create folders and move files')
+                alert('please sign in again when instructed');
+                setTimeout(() => loginGoogle('getToken'), 1000)
+            }
         }
     }
 }
@@ -432,16 +449,11 @@ const getFolders = () => {
 }
 
 const confirmFolders = async () => {
-    alert('The admin email is necessary for managing the server');
     document.getElementById("login-container").style.opacity = "0";
     document.getElementById("loader").style.opacity = "1";
     document.getElementById("loader").style.zIndex = "999";
-    let admin_mail = prompt('please enter admin email')
-    let admin_pass = prompt('please enter admin password')
     let info = await pFetch('setup/confirmFolders', JSON.stringify(library));
     if (info) {
-        alert('store the nino.json file in the config folder of the server')
-        alert("remember to reload the server afterwards");
         let json = {database, library, tmdb_api, google_token, admin_mail, admin_pass,
             cypher: "",
             logger: true,
@@ -450,13 +462,21 @@ const confirmFolders = async () => {
             "base": "http://webservice.fanart.tv/v3/"
         }}
 
-        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json));
-        document.getElementById("login-container").insertAdjacentHTML("beforeend", `<a href="" id="down"/>`);
-        let dlAnchorElem = document.getElementById('down');
-        dlAnchorElem.setAttribute("href",     dataStr     );
-        dlAnchorElem.setAttribute("download", "nino.json");
-        dlAnchorElem.click();
+        let check = await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({username: admin_mail, cypher, data: json, homeBase}))
+        if (check)
+            download(json)
     } else getFolders()
+}
+
+const download = json => {
+    alert('store the nino.json file in the config folder of the server')
+    alert("remember to reload the server afterwards");
+    let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json));
+    document.getElementById("login-container").insertAdjacentHTML("beforeend", `<a href="" id="down"/>`);
+    let dlAnchorElem = document.getElementById('down');
+    dlAnchorElem.setAttribute("href",     dataStr     );
+    dlAnchorElem.setAttribute("download", "nino.json");
+    dlAnchorElem.click();
 }
 
 async function sFetch(url) {
