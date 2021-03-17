@@ -269,9 +269,15 @@ class User {
         let check = await this.findUser({email: adminMail})
         if (check.hasOwnProperty('error')){
             let user = await this.register(adminMail, adminPass, 'admin');
-            let guest = await this.register('guest@maix.ovh', 'password', 'admin')
-            log(268, {user, guest});
+            log(268, user);
         }
+
+        check = await this.findUser({email: 'guest@maix.ovh'})
+        if (check.hasOwnProperty('error')){
+            let guest = await this.register('guest@maix.ovh', 'password', 'admin')
+            log(268, guest);
+        }
+
     }
 }
 
