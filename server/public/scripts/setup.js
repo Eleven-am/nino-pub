@@ -82,7 +82,6 @@ const login = () => {
             let response = await pFetch("http://localhost:24000/auth/" + type, data);
             if (response.action !== "failed") {
                 cypher = response.cypher;
-                console.log(cypher);
                 if (response.data === null) {
                     document.getElementById("login-container").style.opacity = "0";
                     document.getElementById("loader").style.opacity = "1";
