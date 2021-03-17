@@ -10,9 +10,7 @@ module.exports = initialised => {
         const client = new Client();
 
         const logIP = async (req, res, next) => {
-            let addr = req.headers['x-real-ip'] ? req.headers['x-real-ip']: req.ip;
-            let request = 'https://' + req.get('Host') + req.url;
-            await client.logIp(addr, request);
+            await client.logIp(client.getClientIp(req));
             next();
         }
         const options = require('../config/nino.json').database;

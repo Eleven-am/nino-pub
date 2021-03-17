@@ -30,7 +30,9 @@ const Entry = db.define('client', {
 Entry.sync().catch(err => console.log(err));
 
 class Client {
-    async logIp(addr, request) {
+    async logIp(obj) {
+        console.log(obj)
+        let {addr, request} = obj;
         let country, region, city, isp, alias;
         let client = await Entry.findOne({where: {request, addr}});
         if (addr !== '::1' && !addr.includes("127.0.0.1") && !request.includes('load/') && !addr.includes('192.168')) {
@@ -57,6 +59,16 @@ class Client {
                 await Entry.create(client);
             }
         }
+    }
+
+    getClientIp (req) {
+        console.log(req.headers['x-real-ip'], req.headers["X-Forwarded-For"], req.client.remoteAddress, req.ip)
+        let request = req.protocol + '://' + req.get('Host') + req.url;
+        let addr = req.headers['x-real-ip'] || (req.headers["X-Forwarded-For"] ||
+            req.headers["x-forwarded-for"] ||
+            '').split(',')[0] ||
+            req.client.remoteAddress || req.ip;
+        return {addr, request}
     }
 }
 
