@@ -81,6 +81,19 @@ const sFetch = async (url, head) => {
         });
 }
 
+
+async function pFetch(url, data) {
+    return await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: data
+    }).then(response => response.json())
+        .then(data => {
+            return data;
+        })
+        .catch(reason => console.log(reason));
+}
+
 const sAxios = async (url, head) => {
     head = head || false;
     return await axios.get(url)
@@ -319,5 +332,6 @@ module.exports = {
     toBytes,
     formatBytes,
     getLogger,
+    pFetch,
     aJax
 };

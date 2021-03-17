@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
-let {log: ln, change} = require("../base/baseFunctions")
+const {admin_mail, cypher} = require('../config/nino.json')
+let {log: ln, change, pFetch} = require("../base/baseFunctions")
 const mysql = require('mysql2');
 
 /**
@@ -55,10 +56,8 @@ const init = async logger => {
         structure = require('../config/structure.json');
 
         if (nino.hasOwnProperty('cypher')) {
-            check = true; //todo!! validate cypher
-            log(49, 'verified nino credentials');
-            log(40, 'obtaining data from homeBase');
-            //todo!! get nino from home base
+            check = await pFetch('https://nino-homebase.herokuapp.com/auth/validateCypher', JSON.stringify({username: admin_mail, cypher}));
+            check = check === true;
         }
 
         if (check) {
@@ -127,6 +126,7 @@ const init = async logger => {
     info += check3 ? '' : " credentials";
     info += check4 ? '' : " structure";
 
+    console.log(info);
     let file = info === '' ? 'def' : 'setup';
     return info === '' ? true : {file, info};
 }
