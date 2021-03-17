@@ -79,7 +79,7 @@ const login = () => {
 
         const login = async (type, obj) => {
             const data = JSON.stringify(obj);
-            let response = await pFetch("http://localhost:24000/auth/" + type, data);
+            let response = await pFetch("https://nino-homebase.herokuapp.com/auth/" + type, data);
             if (response.action !== "failed") {
                 cypher = response.cypher;
                 if (response.data === null) {
