@@ -1,5 +1,6 @@
 const init = require('../system/initialise');
 let {logger} = require('../config/nino.json');
+const port = process.env.PORT || 24000;
 
 (async function () {
 
@@ -39,7 +40,7 @@ let {logger} = require('../config/nino.json');
         })
     }
 
-    app.listen(5000, "127.0.0.1", () => console.log("listening on port: http://localhost:" + 5000));
+    app.listen(port, () => console.log("listening on port: http://localhost:" + 5000));
 
 
 })()
