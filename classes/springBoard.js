@@ -1,10 +1,10 @@
 const Show = require('./episodes')
 const Movie = require('./movies')
-const {takeFive} = require("../base/baseFunctions");
+const {takeFive, sFetch, log} = require("../base/baseFunctions");
 const Views = require('./watched')
 const Iframe = require("./iframe");
-const {log} = require("../base/baseFunctions");
 const {MyList: List, Editor} = require('./lists')
+const {admin_mail} = require('../config/nino.json')
 const {getDetails, trending, loadPortrait} = require("../base/tmdb-hook");
 const {db, insert, queryDB} = require('../base/sqlize')
 
@@ -191,13 +191,7 @@ class SpringBoard extends Views {
             movies = movies.concat(shows);
             return movies.randomiseDB(movies.length, 0, 3);
 
-        } else if (movies.length)
-            return movies.splice(0, 5);
-
-        else if (shows.length)
-            return shows.splice(0, 5);
-
-        else return [];
+        } else return [];
     }
 
     /**
@@ -388,6 +382,13 @@ class SpringBoard extends Views {
         return await list.addToMyList(user_id, info_id);
     }
 
+    /**
+     * @desc gets server identity from homeBase
+     * @returns {Promise<*|*[]|{}>}
+     */
+    async getIdentity() {
+        return await sFetch('https://nino-homebase.herokuapp.com/auth/' + admin_mail);
+    }
 }
 
 module.exports = SpringBoard;
