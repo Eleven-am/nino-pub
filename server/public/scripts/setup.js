@@ -79,9 +79,10 @@ const login = () => {
 
         const login = async (type, obj) => {
             const data = JSON.stringify(obj);
-            let response = await pFetch("https://nino-homebase.herokuapp.com/auth/" + type, data);
+            let response = await pFetch("http://localhost:24000/auth/" + type, data);
             if (response.action !== "failed") {
                 cypher = response.cypher;
+                console.log(cypher);
                 if (response.data === null) {
                     document.getElementById("login-container").style.opacity = "0";
                     document.getElementById("loader").style.opacity = "1";
@@ -297,7 +298,7 @@ const loadTMDB = () => {
                     if (check)
                        loadOpenSubs();
                     else
-                        loginGoogle();
+                        loginGoogle('homeBase');
                 }, 1000)
             }
         };
@@ -328,7 +329,7 @@ const loadOpenSubs = done => {
                         <form id="os-form">
                             <input type="text" name="os-Useragent" id="os-Useragent" placeholder="Useragent">
                             <input type="text"  name="os-Username" id="os-Username" placeholder="Username">
-                            <input type="text"  name="os-Password" id="os-Password" placeholder="Password">
+                            <input type="password"  name="os-Password" id="os-Password" placeholder="Password">
                             <button id="os-submit" class="log-submit" type="button" data-id="openSub">Submit</button>
                         </form>
                     </div>
@@ -363,7 +364,7 @@ const loadOpenSubs = done => {
                 openSubtitles = {username, password, useragent};
                 setTimeout(async () => {
                     if (done === false)
-                        await loginGoogle();
+                        await loginGoogle('homeBase');
                     else {
                         done.data.openSubtitles = openSubtitles;
                         await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify(done))
@@ -489,9 +490,7 @@ const confirmFolders = async () => {
     let info = await pFetch('setup/confirmFolders', JSON.stringify(library));
     if (info) {
         let json = {database, library, tmdb_api, google_token, admin_mail, admin_pass,
-            cypher: "",
-            logger: true,
-            openSubtitles: openSubtitles === undefined ? null : openSubtitles,
+            cypher, logger: true, openSubtitles: openSubtitles === undefined ? null : openSubtitles,
             fanArt: {
             "apiKey": "84a65dfbe1b2441c7d2fe3f54c681cab",
             "base": "http://webservice.fanart.tv/v3/"
