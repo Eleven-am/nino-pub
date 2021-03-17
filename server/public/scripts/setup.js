@@ -23,6 +23,11 @@ setTimeout(() => {
 
 document.getElementById('tas-submit').onclick = () => login();
 
+const validateEmail = email => {
+    const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(email);
+}
+
 const login = () => {
     document.getElementById("TaS-container").style.opacity = "0";
     document.getElementById("loader").style.opacity = "1";
@@ -37,7 +42,7 @@ const login = () => {
                     </ul>
                     <div id="login-form">
                         <form id="login-form-form">
-                            <input type="text" name="username" id="log-username" placeholder="Username">
+                            <input type="text" name="username" id="log-username" placeholder="Email address">
                             <input type="password"  name="" id="log-password" placeholder="Password">
                             <button id="log-submit" class="log-submit" type="button" data-id="login">Submit</button>
                         </form>
@@ -119,16 +124,9 @@ const login = () => {
             let type = loginBlock.submit.attr("data-id");
             let username = document.getElementById("log-username");
             let password = document.getElementById("log-password");
-            if (type === "login") {
-                const obj = {
-                    username: username.value,
-                    password: password.value
-                };
-                await login(type, obj);
 
-            } else {
-                let confirm = document.getElementById("confirm-password");
-                if (confirm.value === password.value) {
+            if (validateEmail(username.value)){
+                if (type === "login") {
                     const obj = {
                         username: username.value,
                         password: password.value
@@ -136,9 +134,20 @@ const login = () => {
                     await login(type, obj);
 
                 } else {
-                    displayLogError(type, "Passwords did not match");
+                    let confirm = document.getElementById("confirm-password");
+                    if (confirm.value === password.value) {
+                        const obj = {
+                            username: username.value,
+                            password: password.value
+                        };
+                        await login(type, obj);
+
+                    } else
+                        displayLogError(type, "Passwords did not match");
                 }
-            }
+            } else
+                displayLogError(type, "Please enter a valid email address");
+
         })
     }, 1000)
 }
@@ -469,15 +478,14 @@ const confirmFolders = async () => {
 }
 
 const download = async json => {
-    alert('store the nino.json file in the config folder of the server')
-    alert("remember to reload the server afterwards");
+    document.getElementById("login-container").innerHTML = '';
+    document.getElementById("login-container").style.opacity = "0";
+    document.getElementById("loader").style.opacity = "1";
+    document.getElementById("loader").style.zIndex = "999";
     await pFetch('setup/config', JSON.stringify(json));
-    let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json));
-    document.getElementById("login-container").insertAdjacentHTML("beforeend", `<a href="" id="down"/>`);
-    let dlAnchorElem = document.getElementById('down');
-    dlAnchorElem.setAttribute("href",     dataStr     );
-    dlAnchorElem.setAttribute("download", "nino.json");
-    dlAnchorElem.click();
+    setTimeout(() => {
+        window.location.reload()
+    }, 10000);
 }
 
 async function sFetch(url) {
