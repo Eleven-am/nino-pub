@@ -56,11 +56,13 @@ const init = async logger => {
         structure = require('../config/structure.json');
 
         if (nino.hasOwnProperty('cypher')) {
+            log(59, "verifying cypher with motherShip");
             check = await pFetch('https://nino-homebase.herokuapp.com/auth/validateCypher', JSON.stringify({username: admin_mail, cypher}));
             check = check === true;
+            log(62, "motherShip verification " + (check ? "successful": "failed"))
         }
 
-        if (check) {
+        if (nino.hasOwnProperty('database')) {
             log(44, 'building MySQL environment');
             const obj = require('../config/nino.json').database;
             check2 = await makeCONN(obj);
@@ -118,8 +120,7 @@ const init = async logger => {
     } else
         log(111, 'unable to verify config files');
 
-    check && check2 && check3 && check4 ? console.log(113, 'initialise.js', 'initialisation successful') : console.log(109, 'initialise.js', 'verification failed, redirecting to setup for more action')
-
+    let temp = '';
     let info = '';
     info += check ? '' : " cypher";
     info += check2 ? '' : " database";
@@ -127,6 +128,16 @@ const init = async logger => {
     info += check4 ? '' : " structure";
 
     let file = info === '' ? 'def' : 'setup';
+    let files = info.split(' ')
+
+    for (let i = 1; i < files.length -1; i++)
+        if (i !== files.length -2)
+            temp += files[i]+', ';
+        else
+            temp += files[i]+' and ';
+
+    temp += files[files.length -1]
+    check && check2 && check3 && check4 ? console.log(113, 'initialise.js', 'initialisation successful') : console.log(109, 'initialise.js', 'verification failed on '+temp+'; redirecting to setup for more action')
     return info === '' ? true : {file, info};
 }
 
