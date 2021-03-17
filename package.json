@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon server/app",
     "start": "nodemon server/app",
+    "setup": "npm install && nodemon server/app",
     "update": "killall node && node server/app"
   },
   "keywords": [],
