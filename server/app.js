@@ -1,6 +1,6 @@
 const init = require('../system/initialise');
 let {logger} = require('../config/nino.json');
-const port = process.env.PORT || 24000;
+const port = process.env.PORT || 5000;
 
 (async function () {
 

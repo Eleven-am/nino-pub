@@ -1,3 +1,7 @@
+const fs = require('fs');
+const path = require('path')
+const {promisify} = require('util')
+const writeFile = promisify(fs.writeFile);
 const {google} = require('googleapis')
 const express = require('express')
 const router = express.Router()
@@ -145,6 +149,11 @@ router.post('/confirmFolders', async (req, res) => {
         check = await exists(req.body[item], drive);
 
     await res.json(check)
+})
+
+router.post('/config', async (req, res) => {
+    let data = req.body;
+    await writeFile(path.join(__dirname, '../../config/nino.json'), JSON.stringify(data))
 })
 
 module.exports = router;

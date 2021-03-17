@@ -89,7 +89,7 @@ const login = () => {
                 }
                 else {
                     response.data.cypher = response.cypher
-                    download(response.data)
+                    await download(response.data)
                 }
             } else {
                 displayLogError(type, response.error);
@@ -464,13 +464,14 @@ const confirmFolders = async () => {
 
         let check = await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({username: admin_mail, cypher, data: json, homeBase}))
         if (check)
-            download(json)
+            await download(json)
     } else getFolders()
 }
 
-const download = json => {
+const download = async json => {
     alert('store the nino.json file in the config folder of the server')
     alert("remember to reload the server afterwards");
+    await pFetch('setup/config', JSON.stringify(json));
     let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json));
     document.getElementById("login-container").insertAdjacentHTML("beforeend", `<a href="" id="down"/>`);
     let dlAnchorElem = document.getElementById('down');

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server/app",
-    "start": "node server/app",
+    "start": "nodemon server/app",
     "update": "killall node && node server/app"
   },
   "keywords": [],
