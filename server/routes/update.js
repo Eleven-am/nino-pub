@@ -17,6 +17,10 @@ const update = new Update();
     } else await res.json(response);
 })*/
 
+router.get('/checkSub', (req, res) => {
+    res.json(update.checkSub())
+})
+
 router.get('/getLists', async (req, res) => {
     await res.json(await update.getLists());
 })
@@ -32,7 +36,7 @@ router.get('/forceScan/:cond', async (req, res) => {
     let admin = await user.findUser({email: admin_mail})
     if (req.session.user_id === admin.user_id) {
         await res.json(val ? 'rescanning all the subtitles in the entire library' : 'finding and updating the subtitles');
-        //await update.scanSubs(val);
+        await update.scanSubs(val);
         await update.getBackdrops();
     } else await res.json(response);
 })

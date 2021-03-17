@@ -1,12 +1,10 @@
-let osUseragent;
-let osUsername;
-let osPassword;
 let google_token;
 let tmdb_api;
 let database;
 let library;
 let homeBase;
 let cypher;
+let openSubtitles;
 let admin_mail;
 let admin_pass;
 
@@ -94,7 +92,17 @@ const login = () => {
                 }
                 else {
                     response.data.cypher = response.cypher
-                    await download(response.data)
+                    if (response.data.openSubtitles)
+                        await download(response.data)
+                    else {
+                        delete response.action;
+                        response.username = response.data.admin_mail;
+                        let check = confirm('would you like to set up open subtitles');
+                        if (check)
+                            loadOpenSubs(response);
+                        else
+                            await download(response.data)
+                    }
                 }
             } else {
                 displayLogError(type, response.error);
@@ -284,13 +292,20 @@ const loadTMDB = () => {
                 document.getElementById("login-container").style.opacity = "0";
                 document.getElementById("loader").style.opacity = "1";
                 document.getElementById("loader").style.zIndex = "999";
-                setTimeout(() => loginGoogle('homeBase'), 1000)
+                setTimeout(() => {
+                    let check = confirm('would you like to set up open subtitles');
+                    if (check)
+                       loadOpenSubs();
+                    else
+                        loginGoogle();
+                }, 1000)
             }
         };
     }, 1000)
 }
 
-const loadOpenSubs = () => {
+const loadOpenSubs = done => {
+    done = done || false
     document.getElementById("login-container").innerHTML = '';
     document.getElementById("login-container").style.opacity = "0";
     document.getElementById("loader").style.opacity = "1";
@@ -329,11 +344,12 @@ const loadOpenSubs = () => {
         }
 
         document.getElementById("os-submit").onclick = () => {
-            osUseragent = document.getElementById("os-Useragent").value;
-            osUsername = document.getElementById("os-Username").value;
-            osPassword = document.getElementById('os-Password').value;
+            let useragent, username, password;
+            useragent = document.getElementById("os-Useragent").value;
+            username = document.getElementById("os-Username").value;
+            password = document.getElementById('os-Password').value;
 
-            if (osUseragent === '' || osUsername === '' || osPassword === '') {
+            if (useragent === '' || username === '' || password === '') {
                 document.getElementById("os-info").innerText = 'Please enter valid OS credentials to continue';
                 document.getElementById("os-info").style.color = 'rgba(245, 78, 78, .9)';
                 document.getElementById("os-Useragent").style.borderColor = 'rgba(245, 78, 78, .9)';
@@ -344,7 +360,16 @@ const loadOpenSubs = () => {
                 document.getElementById("login-container").style.opacity = "0";
                 document.getElementById("loader").style.opacity = "1";
                 document.getElementById("loader").style.zIndex = "999";
-                setTimeout(() => loginGoogle(), 1000)
+                openSubtitles = {username, password, useragent};
+                setTimeout(async () => {
+                    if (done === false)
+                        await loginGoogle();
+                    else {
+                        done.data.openSubtitles = openSubtitles;
+                        await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify(done))
+                        await download(done.data);
+                    }
+                }, 1000)
             }
         }
     }, 1000)
@@ -466,6 +491,7 @@ const confirmFolders = async () => {
         let json = {database, library, tmdb_api, google_token, admin_mail, admin_pass,
             cypher: "",
             logger: true,
+            openSubtitles: openSubtitles === undefined ? null : openSubtitles,
             fanArt: {
             "apiKey": "84a65dfbe1b2441c7d2fe3f54c681cab",
             "base": "http://webservice.fanart.tv/v3/"

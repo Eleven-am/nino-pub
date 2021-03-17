@@ -20,10 +20,10 @@ const tmdb = document.getElementById("tmdb_id");
 /*const getRec = document.getElementById("info_id");
 const nextDown = document.getElementById("nextDown");
 const suggest = document.getElementById("suggest");
-const subs = document.getElementById("subs");
+const hide = document.getElementById("hide");
 const magnet = document.getElementById("magnet");*/
 const editor = document.getElementById("editor");
-//const hide = document.getElementById("hide");
+const subs = document.getElementById("subs");
 const deleteEntry = document.getElementById("delete");
 const manual = {
     block: document.getElementById("manual"),
@@ -65,6 +65,11 @@ Array.prototype.search = function (value) {
     }
 
     return a;
+}
+
+window.onload = async () => {
+    let check = await sFetch('update/checkSub');
+    subs.style.display = check ? "block": "none";
 }
 
 $("#movie").on("click", async () => {
@@ -433,7 +438,7 @@ tmdb.onclick = async () => {
 }*/
 
 const aller = string => window.location.href = window.location.href + 'update/' + string;
-/*const reach = async location => sFetch('update/' + location)
+const reach = async location => sFetch('update/' + location)
     .then(response => flash(response));
 
 subs.onclick = async () => {
@@ -441,7 +446,7 @@ subs.onclick = async () => {
     await reach('forceScan/' + val);
 }
 
-suggest.onclick = () => reach('suggest');
+/*suggest.onclick = () => reach('suggest');
 magnet.onclick = () => aller('magnet');
 
 nextDown.onclick = async () => {
@@ -466,3 +471,4 @@ deleteEntry.onclick = async () => {
         await explode(response);
     }
 }
+

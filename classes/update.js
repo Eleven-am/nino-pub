@@ -14,8 +14,8 @@ const {
     getCollection
 } = require('../base/tmdb-hook')
 const OS = require('opensubtitles-api')
-/*const {useragent, password, username} = require('../config/nino.json').openSubtitles
-const OpenSubtitles = new OS({useragent, username, password, ssl: true});*/
+const {openSubtitles} = require('../config/nino.json');
+const OpenSubtitles = openSubtitles ? new OS({...openSubtitles, ...{ssl: true}}): null;
 const rename = require('locutus/php/strings/strtr')
 const {log, aJax, sFetch} = require("../base/baseFunctions")
 const {movies, tvShows, backdrop} = require('../config/nino.json').library
@@ -240,45 +240,47 @@ class Update /*extends Magnet */{
     /**
      * @desc this is a recursive function that handles the subtitles logic
      * @returns {Promise<void>}
-     *//*
+     */
     async loadSubs() {
-        let subs = await Sub.findAll({raw: true});
-        await Sub.destroy({where: {id: {[Op.gt]: 0}}});
-        if (subs.length > 0) {
-            let obj = subs[0];
-            subs.shift();
+        if (OpenSubtitles !== null){
+            let subs = await Sub.findAll({raw: true});
+            await Sub.destroy({where: {id: {[Op.gt]: 0}}});
+            if (subs.length > 0) {
+                let obj = subs[0];
+                subs.shift();
 
-            subs = subs.map(sub => {
-                delete sub.id;
-                return sub;
-            });
+                subs = subs.map(sub => {
+                    delete sub.id;
+                    return sub;
+                });
 
-            if (subs.length)
-                await Sub.bulkCreate(subs);
+                if (subs.length)
+                    await Sub.bulkCreate(subs);
 
-            let result = await this.getSub(obj.sub, obj.type);
-            let model = obj.type === 1 ? db.models.movie : db.models.episode;
-            let cond = obj.type === 1 ? {movie_id: obj.sub} : {episode_id: obj.sub};
-            let table = obj.type === 1 ? 'movies' : 'episodes';
-            let item = await model.findOne({where: cond})
-            if (item) {
-                item = item.get();
-                ['eng', 'fre', 'ger'].forEach(e => delete item[e]);
-                item = {...item, ...result};
-                await update(table, table.replace(/s$/, '_id'), obj.sub, item);
-                log(58, logFile, obj.sub + ' from ' + (obj.type === 0 ? 'episodes' : 'movies') + ' has been updated');
-                setTimeout(async () => await this.loadSubs(), 1000);
-            }
-        } else
-            log(64, logFile, 'done');
-    }*/
+                let result = await this.getSub(obj.sub, obj.type);
+                let model = obj.type === 1 ? db.models.movie : db.models.episode;
+                let cond = obj.type === 1 ? {movie_id: obj.sub} : {episode_id: obj.sub};
+                let table = obj.type === 1 ? 'movies' : 'episodes';
+                let item = await model.findOne({where: cond})
+                if (item) {
+                    item = item.get();
+                    ['eng', 'fre', 'ger'].forEach(e => delete item[e]);
+                    item = {...item, ...result};
+                    await update(table, table.replace(/s$/, '_id'), obj.sub, item);
+                    log(58, logFile, obj.sub + ' from ' + (obj.type === 0 ? 'episodes' : 'movies') + ' has been updated');
+                    setTimeout(async () => await this.loadSubs(), 1000);
+                }
+            } else
+                log(64, logFile, 'done');
+        }
+    }
 
     /**
      * @desc gets the subs for a specific entry
      * @param file_id
      * @param type
      * @returns {Promise<{ger: string, fre: string, eng: string}>}
-     *//*
+     */
     async getSub(file_id, type) {
         let obj;
         if (type === 0) {
@@ -323,7 +325,7 @@ class Update /*extends Magnet */{
                 })
         }
         return subs;
-    }*/
+    }
 
     /**
      * @desc confirms if a movie already exists
@@ -418,7 +420,7 @@ class Update /*extends Magnet */{
     /**
      * @desc scans the library for items lacking subs and attempts to add subs to these items
      * @returns {Promise<void>}
-     *//*
+     */
     async scanSubs(ultra) {
         ultra = ultra || false;
         await Sub.destroy({where: {id: {[Op.gt]: 0}}});
@@ -445,7 +447,7 @@ class Update /*extends Magnet */{
         let check = await Sub.findAll();
         await Sub.bulkCreate(obj);
         if (check.length < 1) await this.loadSubs();
-    }*/
+    }
 
     /**
      * @desc gets the next season for all possible shows on the database if available
@@ -666,7 +668,7 @@ class Update /*extends Magnet */{
                             let obj = {sub: upd.item.movie_id, type: 1};
                             let check = await Sub.findAll();
                             await Sub.create(obj);
-                            //if (check.length < 1) await this.loadSubs();
+                            if (check.length < 1) await this.loadSubs();
                         }
                     }
                 }
@@ -689,6 +691,14 @@ class Update /*extends Magnet */{
                 }
             }
         }
+    }
+
+    /**
+     * @desc checks if user has activated subtitles
+     * @returns {boolean}
+     */
+    checkSub () {
+        return !(OpenSubtitles === null);
     }
 }
 

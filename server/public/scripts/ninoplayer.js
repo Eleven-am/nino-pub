@@ -39,7 +39,7 @@ const buildVideo = async (response, next, subs) => {
     ninoPlayer.uiBlocks.controls.classList.remove("slideLeftDo");
     ninoPlayer.uiBlocks.block.style.display = "block";
 
-    /*let array = ['eng', 'fre', 'ger'];
+    let array = ['eng', 'fre', 'ger'];
     let keys = ['en', 'fr', 'de'];
     let label = ['English', 'Français', 'Deutsch'];
     ninoPlayer.subs.push('na');
@@ -52,7 +52,7 @@ const buildVideo = async (response, next, subs) => {
 
         } else
             document.getElementById(val).style.display = 'none';
-    });*/
+    });
 
     displayControls();
 
@@ -76,7 +76,7 @@ const nextLoader = async () => {
     let response = await sFetch("watch/" + link);
     let next = await sFetch("watch/upNext/" + response.next);
     let name = response.episodeName !== undefined ? response.episodeName : response.name;
-    //let subtitles = await sFetch("watch/subs/" + response.location);
+    let subtitles = await sFetch("watch/subs/" + response.location);
     handleHistory('watch', link, "\u25B6 " + name, 'watch=' + response.location);
     await getPetitCont();
 
@@ -93,7 +93,7 @@ const nextLoader = async () => {
     ninoPlayer.booleans.countdownStarted = false;
     ninoPlayer.subs = [];
 
-    await buildVideo(response, next, /*subtitles*/);
+    await buildVideo(response, next, subtitles);
 }
 
 const destroyVideo = async () => {
@@ -300,7 +300,7 @@ const confirming = async value => {
     }
 }
 
-/*const hideSubs = () => {
+const hideSubs = () => {
     ninoPlayer.activeSub = 'na';
     let tracks = ninoPlayer.video.textTracks;
     for (let track of tracks)
@@ -309,7 +309,7 @@ const confirming = async value => {
     subtitles.block.style.opacity = "0";
     subtitles.block.style.zIndex = "-999999";
     subtitles.shown = false;
-}*/
+}
 
 const beginCountdown = async int => {
     if (ninoPlayer.booleans.countdownStarted) {
@@ -331,7 +331,7 @@ const beginCountdown = async int => {
     }
 }
 
-/*const showSub = language => {
+const showSub = language => {
     ninoPlayer.activeSub = language;
     let tracks = ninoPlayer.video.textTracks;
     for (let track of tracks)
@@ -339,9 +339,9 @@ const beginCountdown = async int => {
             track.mode = 'showing';
         else
             track.mode = "hidden";
-}*/
+}
 
-/*const switchSubs = () => {
+const switchSubs = () => {
     let index = -1;
     for (let i = 0; i < ninoPlayer.subs.length; i++)
         if (ninoPlayer.subs[i] === ninoPlayer.activeSub) {
@@ -352,7 +352,7 @@ const beginCountdown = async int => {
     index = index === ninoPlayer.subs.length ? 0 : index;
     if (index === 0) hideSubs()
     else showSub(ninoPlayer.subs[index]);
-}*/
+}
 
 const stillWatching = setTimeout(() => {
     if (ninoPlayer.booleans.active && !ninoPlayer.video.paused){
@@ -367,16 +367,16 @@ $(document).on("click", ".play", async event => {
     let response = await sFetch("watch/" + link);
     let upNext = await sFetch("watch/upNext/" + response.next);
     let name = response.episodeName !== undefined ? response.episodeName : response.name;
-    //let subtitles = await sFetch("watch/subs/" + response.location);
+    let subtitles = await sFetch("watch/subs/" + response.location);
     //ninoPlayer.timers.stillWatching = stillWatching;
     handleHistory('watch', link, "\u25B6 " + name, 'watch=' + response.location);
-    await buildVideo(response, upNext, /*subtitles*/);
+    await buildVideo(response, upNext, subtitles);
 })
 
-/*$('.subs').on("click", async event => {
+$('.subs').on("click", async event => {
     let language = event.currentTarget.attributes["data-id"].nodeValue;
     showSub(language);
-})*/
+})
 
 document.addEventListener('keyup', async event => {
     if (ninoPlayer.booleans.active && !download.active) {
@@ -401,8 +401,8 @@ document.addEventListener('keyup', async event => {
         if (event.code === 'KeyF')
             toggleFullScreen();
 
-        /*if (event.code === 'KeyS')
-            switchSubs();*/
+        if (event.code === 'KeyS')
+            switchSubs();
 
         if (event.code === 'ArrowLeft')
             ninoPlayer.video.currentTime -= 30;
@@ -454,7 +454,7 @@ subtitles.trigger.onclick = () => {
     }
 }
 
-//subtitles.none.onclick = () => hideSubs();
+subtitles.none.onclick = () => hideSubs();
 
 ninoPlayer.video.onwaiting = () => {
     ninoPlayer.uiBlocks.buffer.style.display = "block";
