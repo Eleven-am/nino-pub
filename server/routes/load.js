@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const SpringBoard = require('../../classes/springBoard')
+const {sFetch} = require('../../base/baseFunctions')
 const {loadImages} = require('../../classes/auths')
 const {Editor} = require('../../classes/lists')
 let structure = require('../../config/structure.json')
@@ -53,6 +54,9 @@ router.get('/:type', async (req, res) => {
 
         else if (req.params.type === "tv")
             response.data = await spring.getLibrary(false, false);
+
+        else if (req.params.type === "maix")
+            response.data = await sFetch('https://nino-homebase.herokuapp.com/maix/maix');
 
         else {
             response.data = await spring.getList(req.params.type);

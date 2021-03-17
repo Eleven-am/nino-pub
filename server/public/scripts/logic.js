@@ -291,7 +291,7 @@ const loadAnimate = (array) => {
     for (let i = 0; i < array.length; i++) {
         const pos = i === 2 ? "in" : "out";
         const img = array[i].logo !== "" ? `<img class="img2" src="${array[i].logo}" alt="${array[i].name}">` : `<label class="randLabel">${array[i].name}</label>`;
-        htmlString += `<div class="info" alt="${array[i].type === 1 ? "m" + array[i].tmdb_id : "s" + array[i].tmdb_id}">
+        htmlString += `<div class="info"alt="${(array[i].external ? "h" + '/' + array[i].external+ '/' :"") + (array[i].type === 1 ? "m" : "s") + array[i].tmdb_id}">
                     <div class="recent-div ${pos} number${i}">
                         ${img}
                         <img class="img1" src="${array[i].backdrop}">
@@ -377,9 +377,9 @@ const getCont = async () => {
     if (data !== false && data.length >= 1) {
         document.getElementById(container).removeAttribute("style");
         element.innerHTML = data.map(file => `
-            <li class="info" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
+            <li class="info" alt="${(file.external ? "h" + '/' + file.external + '/': "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}">
                 <div class="continue-inner-div">
-                    <div class="editors-img play" data-id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
+                    <div class="editors-img play" data-id="${(file.external ? "h" + '/' + file.external + '/': "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}">
                         <img class="editors-backdrop" src="${file.backdrop}" id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
                         ${file.logo !== '' ? `<img class="editors-logo" src="${file.logo}" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">` : `<span class="editors-label">${file.name}</span>`}
                         <div class="cont-progress-groove" style="display: ${file.position === 0 ? "none" : "flex"}"><div class="progress-fill" style="width: ${file.position === 100 ? 100 : file.position / 10}%"></div></div>
@@ -411,7 +411,7 @@ const userFunc = async hoc => {
 
 const loadList = (blobs, element) => {
     let string = blobs.map(file => `
-        <li class="info" alt="${(file.type === 1 ? "m" : "s") + file.tmdb_id}">
+        <li class="info" alt="${(file.external ? "h" + '/' + file.external + '/' : "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}">
             <img src="${file.poster}"  alt="${(file.type === 1 ? "m" : "s") + file.tmdb_id}">
             ${file.tag ? `<div class="basic-tags"><span>${file.tag}</span></div>` : ''}
         </li>
@@ -422,7 +422,7 @@ const loadList = (blobs, element) => {
 const loadChoice = (blobs, element) => {
     if (!blobs.hasOwnProperty('error'))
         element.innerHTML = blobs.map(file => `
-            <li class="info" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}" data-id="${file.trailer}">
+            <li class="info" alt="${(file.external ? "h" + '/' + file.external + '/' : "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}" data-id="${file.trailer}">
                 <div class="editors-inner-div">
                     <div class="editors-img">
                         <img class="editors-backdrop" src="${file.backdrop}" id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
@@ -755,7 +755,7 @@ const showHtml = matches => {
     if (matches.length > 0) {
         search.result.innerHTML = matches.map(match => `
         <li data-id="${match.tmdb_id}" class="searchRes">
-            <img class="info searchImages" src="" alt="${(match.type === 1 ? "m" : "s") + match.tmdb_id}">
+            <img class="info searchImages" src="" alt="${(match.external ? "h" + '/' + match.external + '/' : "") + (match.type === 1 ? "m" : "s") + match.tmdb_id}">
             <span>${match.name}</span>
         </li>
         `).join('');
