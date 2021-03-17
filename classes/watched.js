@@ -402,8 +402,7 @@ class Watched {
                 attributes: ['name', 'tmdb_id', 'logo', 'backdrop']
             }]
         });
-        let data = shows.uniqueID('show_id').concat(movies);
-        data = data.sortKey('updatedAt', false);
+        let data = shows.uniqueID('show_id').concat(movies).sortKey('updatedAt', false).slice(0, 10);
         let response = [];
         for (let item of data) {
             if (item.hasOwnProperty('movie_id')) {
