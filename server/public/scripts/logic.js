@@ -918,7 +918,7 @@ $(document).on("click", ".info", async function (event) {
     let link = event.currentTarget.attributes["alt"].nodeValue;
     let response = await sFetch(`info/${link}`);
     ssd.name = response.name;
-    handleHistory("info", (response.type === "movie" ? "m" : "s") + response.id, response.name, (response.type === "movie" ? "movie" : "show") + '=' + response.name.replace(/ /g, '+'));
+    handleHistory("info", (response.type === "movie" ? "m" : "s") + response.id, response.name, (response.type === "movie" ? "movie" : "show") + '=' + response.name.replace(/\s/g, '+').replace(/\//g, '-'));
     buildInfo(response);
 });
 
