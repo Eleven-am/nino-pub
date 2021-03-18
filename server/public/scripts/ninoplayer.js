@@ -5,9 +5,9 @@ Object.defineProperty(HTMLMediaElement.prototype, 'playing', {
 })
 
 const buildVideo = async (response, next, subs) => {
-    upNext.image.src = next.backdrop;
-    upNext.name.innerText = next.name;
-    upNext.overview.innerText = next.overview;
+    upNext.image.src = !next.hasOwnProperty('error')? next.backdrop: 'images/meta';
+    upNext.name.innerText = !next.hasOwnProperty('error')? next.name: 'Something went wrong';
+    upNext.overview.innerText = !next.hasOwnProperty('error')? next.overview: next.error;
     ninoPlayer.buttons.next.setAttribute('data-id', next.play);
     ninoPlayer.uiBlocks.previewFrame.src = response.backdrop;
     ninoPlayer.uiBlocks.overview.innerText = response.overview;

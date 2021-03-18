@@ -319,10 +319,10 @@ class Watched {
      * @desc provides nino player with the next video on cue to be played
      * @param user_id
      * @param info_id
-     * @returns {Promise<{play: string, overview, backdrop, name}>}
+     * @returns {Promise<{error: string}>}
      */
     async getUpNext(user_id, info_id) {
-        let result;
+        let result = {error: "could not find a suitable suggestion"}
         info_id = `${info_id}`;
         let check = info_id.length > 8;
         if (check) {
@@ -347,9 +347,11 @@ class Watched {
                 let show = await showClass.getRecommendations(true);
                 show = show.recommendations.randomiseDB(1, 1, 1);
 
-                show = await this.getNextEpisode(user_id, show[0].tmdb_id);
-                let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
-                result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
+                if (show.length){
+                    show = await this.getNextEpisode(user_id, show[0].tmdb_id);
+                    let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
+                    result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
+                }
             }
 
         } else {
@@ -370,9 +372,11 @@ class Watched {
                 let show = await showClass.getRecommendations(true);
                 show = show.recommendations.randomiseDB(1, 1, 1);
 
-                show = await this.getNextEpisode(user_id, show[0].tmdb_id);
-                let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
-                result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
+                if (show.length){
+                    show = await this.getNextEpisode(user_id, show[0].tmdb_id);
+                    let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
+                    result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
+                }
             }
         }
 
