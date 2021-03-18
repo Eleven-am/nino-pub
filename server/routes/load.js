@@ -55,8 +55,8 @@ router.get('/:type', async (req, res) => {
         else if (req.params.type === "tv")
             response.data = await spring.getLibrary(false, false);
 
-        else if (req.params.type === "maix")
-            response.data = await sFetch('https://nino-homebase.herokuapp.com/maix/maix');
+        /*else if (req.params.type === "maix")
+            response.data = await sFetch('https://nino-homebase.herokuapp.com/maix/maix');*/
 
         else {
             response.data = await spring.getList(req.params.type);
