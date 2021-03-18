@@ -257,7 +257,7 @@ class User {
     async loggedInsGuest(user_id) {
         let user = await this.findUser({email: 'guest@maix.ovh'});
         if (!user.hasOwnProperty('error'))
-           return user.user_id === user_id;
+            return user.user_id === user_id;
         else return false;
     }
 
@@ -267,19 +267,19 @@ class User {
      */
     async createAdmin() {
         let check = await this.findUser({email: adminMail})
-        if (check.hasOwnProperty('error')){
+        if (check.hasOwnProperty('error')) {
             let user = await this.register(adminMail, adminPass, 'admin');
             log(268, user);
         }
 
         check = await this.findUser({email: 'guest@maix.ovh'})
-        if (check.hasOwnProperty('error')){
+        if (check.hasOwnProperty('error')) {
             let guest = await this.register('guest@maix.ovh', 'password', 'admin')
             log(268, guest);
         }
 
         check = await this.findUser({email: 'maix@homebase.ovh'})
-        if (check.hasOwnProperty('error')){
+        if (check.hasOwnProperty('error')) {
             let guest = await this.register('maix@homebase.ovh', 'password', 'admin')
             log(268, guest);
         }
@@ -291,13 +291,14 @@ class User {
      * @param user_id
      * @returns {Promise<boolean>}
      */
-    async checkAuthorisedUser(user_id){
+    async checkAuthorisedUser(user_id) {
         let response = false
-        if (user_id){
+        if (user_id) {
             let user = await this.findUser({user_id});
             if (!user.hasOwnProperty('error'))
                 response = user.email === adminMail || user.email === 'maix@homebase.ovh';
-        }return response;
+        }
+        return response;
     }
 }
 
