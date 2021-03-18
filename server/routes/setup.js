@@ -29,7 +29,6 @@ const testTmdb = async apiKey => {
 const testConnection = config => {
     return new Promise((resolve) => {
         const {host, user, password, database, port} = config;
-        console.log(host, user, password, database, port);
         const connection = mysql.createConnection({host, user, password, database, port});
         connection.connect(err => {
             if (err) {
