@@ -1,8 +1,8 @@
 const express = require('express')
 const {User} = require("../../classes/auths");
 const {admin_mail} = require('../../config/nino.json')
-const router = express.Router()
-const Update = require("../../classes/update")
+const router = express.Router();
+const Update = require("../../classes/update");
 const {getDetails} = require("../../base/tmdb-hook");
 const {takeFive} = require("../../base/baseFunctions");
 const user = new User();
@@ -33,8 +33,7 @@ router.get("/scan/:type", async (req, res) => {
 router.get('/forceScan/:cond', async (req, res) => {
     let response = 'Please authenticate';
     let val = req.params.cond === 'true';
-    let admin = await user.findUser({email: admin_mail})
-    if (req.session.user_id === admin.user_id) {
+    if (await user.checkAuthorisedUser(req.session.user_id)){
         await res.json(val ? 'rescanning all the subtitles in the entire library' : 'finding and updating the subtitles');
         await update.scanSubs(val);
         await update.getBackdrops();
@@ -124,24 +123,21 @@ router.post("/category", async (req, res) => {
 router.get("/database/:bool", async (req, res) => {
     let response = 'Please authenticate';
     let bool = req.params.bool === 'true';
-    let admin = await user.findUser({email: admin_mail})
     await update.autoScan();
-    if (req.session.user_id === admin.user_id)
+    if (await user.checkAuthorisedUser(req.session.user_id))
         response = await update.scanEpisodes(bool);
 
     await res.json(response);
 })
 
 router.get('/:file', async (req, res) => {
-    let admin = await user.findUser({email: admin_mail})
-    if (req.session.user_id === admin.user_id && req.params.file !== 'auth')
+    if (await user.checkAuthorisedUser(req.session.user_id) && req.params.file !== 'auth')
         req.session.file = req.params.file;
     res.redirect('/');
 })
 
 router.get('/', async (req, res) => {
-    let admin = await user.findUser({email: admin_mail})
-    if (req.session.user_id === admin.user_id)
+    if (await user.checkAuthorisedUser(req.session.user_id))
         req.session.file = 'update';
     res.redirect('/');
 })

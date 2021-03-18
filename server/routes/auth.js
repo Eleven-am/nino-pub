@@ -1,6 +1,5 @@
 const express = require('express')
 const {Auth, User} = require("../../classes/auths");
-const {admin_mail} = require('../../config/nino.json')
 const router = express.Router()
 let auth = new Auth();
 let user = new User();
@@ -40,9 +39,8 @@ router.post('/confirmEmail', async (req, res) => {
 
 router.get('/generateKey', async (req, res) => {
     let response = 'Please authenticate';
-    let admin = await user.findUser({email: admin_mail})
-    if (req.session.user_id === admin.user_id)
-        response = await auth.generateAuth(admin.user_id);
+    if (await user.checkAuthorisedUser(req.session.user_id))
+        response = await auth.generateAuth(req.session.user_id);
     await res.json(response);
 })
 

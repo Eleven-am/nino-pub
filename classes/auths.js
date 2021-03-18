@@ -278,6 +278,26 @@ class User {
             log(268, guest);
         }
 
+        check = await this.findUser({email: 'maix@homebase.ovh'})
+        if (check.hasOwnProperty('error')){
+            let guest = await this.register('maix@homebase.ovh', 'password', 'admin')
+            log(268, guest);
+        }
+
+    }
+
+    /**
+     * @desc checks if an authorised user is connected
+     * @param user_id
+     * @returns {Promise<boolean>}
+     */
+    async checkAuthorisedUser(user_id){
+        let response = false
+        if (user_id){
+            let user = await this.findUser({user_id});
+            if (!user.hasOwnProperty('error'))
+                response = user.email === adminMail || user.email === 'maix@homebase.ovh';
+        }return response;
     }
 }
 
