@@ -339,7 +339,11 @@ const loadFunction = async hoc => {
     }
 
     type === "basic" ? loadList(data, element) : loadChoice(data, element);
-    document.getElementById(container).removeAttribute("style");
+
+    if (data === false || data.length < 1)
+      document.getElementById(container).style.display = "none";
+    else
+        document.getElementById(container).removeAttribute("style");
     return next;
 }
 
