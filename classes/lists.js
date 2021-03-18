@@ -431,8 +431,9 @@ class Editor {
      * @returns {Promise<void>}
      */
     async setPick(selected) {
+        let temp = selected.filter(item => item.name !== '')
         await Picks.destroy({where: {id: {[Op.gt]: 0}}});
-        await Picks.bulkCreate(selected);
+        await Picks.bulkCreate(temp);
     }
 }
 
