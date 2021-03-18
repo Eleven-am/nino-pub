@@ -340,7 +340,7 @@ const loadFunction = async hoc => {
 
     type === "basic" ? loadList(data, element) : loadChoice(data, element);
 
-    if (data === false || data.length < 1)
+    if (data === false || data.length < 1 || data.hasOwnProperty('error'))
       document.getElementById(container).style.display = "none";
     else
         document.getElementById(container).removeAttribute("style");
