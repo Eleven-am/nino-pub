@@ -15,6 +15,18 @@ It organises the Movies and TV shows on your drive account, providing you with t
 * To scan your library or perform any admin task, visit http://localhost:5000/update (from here you can access other admin pages)
 * To create auth keys log in as admin and visit http://localhost:5000/auth/generateKey
 
+#### How to arrange the files
+* For movies, it is imperative that only the movie file itself is placed directly in the movie folder like so ![](art/22.png)
+* For TV shows every Show should be placed in its folder like so ![](art/24.png)
+* When arranging the episodes you have two options
+    * Place each episode in its corresponding Season folder, like so (Recommended) ![](art/25.png) ![](art/26.png)
+    * Alternatively you can place them directly in the Show folder but only if they can pass this s|SXX .. eE|XX naming scheme, for example;
+        * S01 - E01
+        * S01 randomText E01  
+        * s01e01 | S01E01
+    like so ![](art/23.png)
+
+
 ## Some Features of nino
 * The boarding page ![](art/1.png)
 * The boarding page ![](art/2.png)
