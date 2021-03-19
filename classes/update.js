@@ -196,7 +196,7 @@ class Update /*extends Magnet */{
                 let seasonDetails = await drive.getFile(season.id)
                 if (seasonDetails.mimeType === 'application/vnd.google-apps.folder') {
                     let episodes = await drive.readFolder(season.id);
-                    let season_id = season.name.replace('Season ', '')
+                    let season_id = season.name.replace(/season/i, '');
 
                     if (boolean) {
                         let check = await db.models.episode.findAll({
