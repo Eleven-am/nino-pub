@@ -135,12 +135,12 @@ class Update /*extends Magnet */{
         let ext = path.extname(file.name)
         if ((ext === '.mp4' || ext === '.m4v') && file.mimeType !== 'application/vnd.google-apps.folder'){
             let name = rename(file.name, dicDo);
-            let matches = name.match(/s(?<season>\d{2}).*?e(?<episode>\d{2})/i);
+            let matches = name.match(/s(?<season>\d+).*?e(?<episode>\d+)/i);
             if (matches === null) {
                 matches = name.match(/\d{2}/g);
                 let index = /^\d{2}/.test(name) || /e\d{2}.*?e\d{2}/i ? 0 : matches.length - 1;
                 matches = matches.length ? {groups: {episode: matches[index]}} : null;
-                if (/\d{3}/.test(name))
+                if (/\d{3}/.test(name) && !/^\d{2}/.test(name))
                     matches = name.match(/(?<season>\d)(?<episode>\d{2})/);
             }
 
@@ -208,8 +208,8 @@ class Update /*extends Magnet */{
             let episode = (i + 1 > 9 ? '' : '0') + (i + 1);
             let matches = rename(files[i].name, dicDo).match(/\d{2}/g);
             episode = matches.length ? matches[matches.length - 1] : episode;
-            episode = `${show.name} S${temp}E${episode}${ext}`;
-            //await drive.renameFile(files[i].id, episode);
+            let name = `${show.name} S${temp}E${episode}${ext}`;
+            await drive.renameFile(files[i].id, name);
             let obj = {
                 ...{
                     gid: files[i].id,
@@ -276,8 +276,8 @@ class Update /*extends Magnet */{
                         continue;
 
                     let season_id = matches.groups.season;
-                    if (season.name !== 'Season ' + season_id)
-                        await drive.renameFile(season.id, 'Season ' + season_id)
+                    if (season.name !== 'Season ' + parseInt(season_id))
+                        await drive.renameFile(season.id, 'Season ' + parseInt(season_id))
 
                     let check = episodes.filter(item => item.season_id === parseInt(season_id))
                     if (boolean && check.length === files.length)
@@ -291,7 +291,7 @@ class Update /*extends Magnet */{
                             break;
                     } if (check.length) {
                         for (let item of check) {
-                            let entry = await db.models.episode.findOne({where: {episode_id: item.episode_id}});
+                            let entry = await db.models.episode.findOne({where: {episode_id: item.episode_id, gid: item.gid}});
                             if (entry)
                                 await entry.destroy();
                         }
