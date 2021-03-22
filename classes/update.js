@@ -209,7 +209,7 @@ class Update /*extends Magnet */{
             let matches = rename(files[i].name, dicDo).match(/\d{2}/g);
             episode = matches.length ? matches[matches.length - 1] : episode;
             episode = `${show.name} S${temp}E${episode}${ext}`;
-            await drive.renameFile(files[i].id, episode);
+            //await drive.renameFile(files[i].id, episode);
             let obj = {
                 ...{
                     gid: files[i].id,
