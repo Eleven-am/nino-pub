@@ -129,7 +129,7 @@ class Update /*extends Magnet */{
      * @param previous
      * @param season_id
      * @param check
-     * @returns {Promise<void>}
+     * @returns {Promise<{previous: number, check}>}
      */
     async handleEpisode(boolean, file, show, season, previous, season_id, check){
         let ext = path.extname(file.name)
@@ -226,6 +226,21 @@ class Update /*extends Magnet */{
             let episode = await db.models.episode.findOne({where: {episode_id: file.episode_id, gid: file.gid}})
             if (episode)
                 await episode.destroy();
+        }
+    }
+
+    /**
+     * @desc Attempts to clean the movie db by removing files that might hav an error and attempting to re-download them at the same time
+     * @returns {Promise<void>}
+     */
+    async cleanHouse() {
+        let movies = await db.models.movie.findAll();
+        for (let item of movies) {
+            let temp = await drive.getFile(item.gid);
+            if (temp.hasOwnProperty('error')) {
+                await this.getTMdbMagnet('m' + item.tmdb_id)
+                await item.destroy();
+            }
         }
     }
 
