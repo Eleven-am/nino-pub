@@ -85,54 +85,7 @@ class Update /*extends Magnet */{
         return response;
     }
 
-    /**
-     * @desc
-     * @param file
-     * @param tvShow
-     * @param season_id
-     * @returns {Promise<void>}
-     */
-    async handleEpisode(file, tvShow, season_id) {
-        let check = await db.models.episode.findOne({where: {gid: file.id}});
-        if (check === null) {
-            let regex = /[sS](?<season_id>\d{2}).*?[eE](?<episode>\d{2})/;
-            let matches = file.name.match(regex);
-            matches = matches === null ? file.name.match(/.*?(?<season_id>\d)(?<episode>\d{2})/) : matches;
-            matches = matches === null ? file.name.match(/.*?(?<episode>\d{2})/) : matches;
-
-            if (matches !== null) {
-                season_id = season_id === undefined && matches.groups.season_id ? matches.groups.season_id : season_id;
-                let eID = matches.groups.episode;
-                if (season_id !== undefined){
-                    let episode_id = parseInt(`${tvShow}` + season_id + eID);
-
-                    check = await db.models.episode.findOne({where: {gid: file.id, episode_id: episode_id}});
-                    if (check === null) {
-                        let episode = {
-                            show_id: tvShow,
-                            season_id: parseInt(season_id),
-                            episode: parseInt(eID),
-                            gid: file.id,
-                            episode_id: episode_id
-                        }
-
-                        let cond = {episode_id}
-                        episode = {...episode, ...subs};
-                        await insert(db.models.episode, episode, cond)
-                        let show = await db.models.show.findOne({where: {id: tvShow}});
-                        show.changed('updatedAt', true);
-                        await show.update({updatedAt: new Date()});
-                        let obj = {sub: episode_id, type: 0};
-                        check = await Sub.findAll();
-                        await Sub.create(obj);
-                        if (check.length < 1) await this.loadSubs();
-                    }
-                }
-            }
-        }
-    }
-
-    /**
+   /**
      * @desc adds a list of entries to database
      * @param name
      * @param ids
@@ -168,57 +121,171 @@ class Update /*extends Magnet */{
     }
 
     /**
+     * @desc handles the recognition and storing of each episode file
+     * @param boolean
+     * @param file
+     * @param show
+     * @param season
+     * @param previous
+     * @param season_id
+     * @param check
+     * @returns {Promise<void>}
+     */
+    async handleEpisode(boolean, file, show, season, previous, season_id, check){
+        let ext = path.extname(file.name)
+        if ((ext === '.mp4' || ext === '.m4v') && file.mimeType !== 'application/vnd.google-apps.folder'){
+            let name = rename(file.name, dicDo);
+            let matches = name.match(/s(?<season>\d{2}).*?e(?<episode>\d{2})/i);
+            if (matches === null) {
+                matches = name.match(/\d{2}/g);
+                let index = /^\d{2}/.test(name) || /e\d{2}.*?e\d{2}/i ? 0 : matches.length - 1;
+                matches = matches.length ? {groups: {episode: matches[index]}} : null;
+                if (/\d{3}/.test(name))
+                    matches = name.match(/(?<season>\d)(?<episode>\d{2})/);
+            }
+
+            if (matches){
+                let eID = matches.groups.episode;
+                season_id = season_id === undefined && matches.groups.season ? matches.groups.season : season_id;
+                let episode_id = parseInt(`${show.id}` + season_id + eID);
+
+                if (season_id === undefined)
+                    return  {check, previous};
+
+                if (previous !== episode_id) {
+                    previous = episode_id;
+
+                    let checkers = check.find(item => item.episode_id === episode_id && item.gid === file.id);
+                    check = check.filter(item => !(item.episode_id === episode_id && item.gid === file.id));
+
+                    if (checkers === undefined){
+                        let episode = {
+                            show_id: show.id,
+                            season_id: parseInt(season_id),
+                            episode: parseInt(eID),
+                            gid: file.id,
+                            episode_id: episode_id
+                        }
+
+                        let cond = {episode_id}
+                        episode = {...episode, ...subs};
+                        await insert(db.models.episode, episode, cond)
+                        if (boolean) {
+                            show.changed('updatedAt', true);
+                            await show.update({updatedAt: new Date()});
+                        }
+                        let obj = {sub: episode_id, type: 0};
+                        checkers = await Sub.findAll();
+                        await Sub.create(obj);
+                        if (checkers.length < 1) await this.loadSubs();
+                    }
+                } else {
+                    await this.renameAndScan(season.id, show, season_id);
+                    return {check, previous, break: true}
+                }
+            }
+        } else
+            console.log(file)
+        //await drive.deleteFile(file.id)
+
+        return {check, previous}
+    }
+
+    /**
+     * @desc scans, renames and saves files in a season folder that might be difficult for scanEpisodes
+     * @param folder
+     * @param show
+     * @param season_id
+     * @returns {Promise<void>}
+     */
+    async renameAndScan(folder, show, season_id) {
+        let files = await drive.readFolder(folder);
+        let episodes = await db.models.episode.findAll({where: {show_id: show.id, season_id}, raw: true})
+        let temp = (season_id > 9 ? '' : '0') + season_id;
+
+        for (let i = 0; i < files.length; i++) {
+            let ext = path.extname(files[i].name)
+            let episode = (i + 1 > 9 ? '' : '0') + (i + 1);
+            let matches = rename(files[i].name, dicDo).match(/\d{2}/g);
+            episode = matches.length ? matches[matches.length - 1] : episode;
+            episode = `${show.name} S${temp}E${episode}${ext}`;
+            await drive.renameFile(files[i].id, episode);
+            let obj = {
+                ...{
+                    gid: files[i].id,
+                    episode: parseInt(episode),
+                    show_id: show.id, season_id: parseInt(season_id),
+                    episode_id: parseInt(`${show.id}${season_id}${episode}`)
+                }, ...subs
+            }
+            episodes = episodes.filter(item => item.episode_id !== obj.episode_id);
+            await insert(db.models.episode, obj, {episode_id: obj.episode_id});
+        }
+
+        for (let file of episodes) {
+            let episode = await db.models.episode.findOne({where: {episode_id: file.episode_id, gid: file.gid}})
+            if (episode)
+                await episode.destroy();
+        }
+    }
+
+    /**
      * @desc scans the library for new seasons and episodes
      * @returns {Promise<void>}
      */
     async scanEpisodes(boolean) {
         let shows = await db.models.show.findAll({order: [['id', 'DESC']]});
         for (let show of shows) {
-            show = show.get();
+            log(131, 'scanning ' + show.name)
+            let episodes = await db.models.episode.findAll({
+                where: {show_id: show.id},
+                attributes: ['season_id', 'episode', "episode_id", "gid"],
+                raw: true
+            });
+            let seasons = await drive.readFolder(show.gid);
+
             if (boolean) {
-                let episodes = await db.models.episode.findAll({
-                    where: {show_id: show.id},
-                    attributes: ['season_id', 'episode', "episode_id"],
-                    raw: true
-                });
-
                 let seasons = episodes.uniqueID('season_id');
-
                 let tvShow = await getDetails(0, show.tmdb_id);
                 if (tvShow.number_of_seasons === seasons.length && tvShow.number_of_episodes === episodes.length)
                     continue;
             }
 
-            let seasons = await drive.readFolder(show.gid);
-            let tvShow = show.id;
+            for (const season of seasons) {
+                if (season.mimeType === 'application/vnd.google-apps.folder'){
+                    let files = await drive.readFolder(season.id);
+                    let matches = season.name.match(/^Season\s(?<season>\d+)/i);
 
-            for (let season of seasons) {
-                let seasonDetails = await drive.getFile(season.id)
-                if (seasonDetails.mimeType === 'application/vnd.google-apps.folder') {
-                    let episodes = await drive.readFolder(season.id);
-                    let season_id = season.name.replace(/season/i, '');
+                    let previous;
+                    if (matches === null)
+                        continue;
 
-                    if (boolean) {
-                        let check = await db.models.episode.findAll({
-                            raw: true,
-                            where: {season_id: parseInt(season_id), show_id: tvShow}
-                        });
-                        if (check.length === episodes.length)
-                            continue;
-                    }
+                    let season_id = matches.groups.season;
+                    if (season.name !== 'Season ' + season_id)
+                        await drive.renameFile(season.id, 'Season ' + season_id)
 
-                    for (const file of episodes) {
-                        let ext = path.extname(file.name)
-                        if (file.mimeType === 'application/vnd.google-apps.folder' || (ext !== '.mp4' && ext !== '.m4v')) {
-                            await drive.deleteFile(file.id)
-                            continue;
+                    let check = episodes.filter(item => item.season_id === parseInt(season_id))
+                    if (boolean && check.length === files.length)
+                        continue;
+
+                    for (const file of files) {
+                        let obj = await this.handleEpisode(boolean, file, show, season, previous, season_id, check)
+                        check = obj.check;
+                        previous = obj.previous;
+                        if (obj.hasOwnProperty('break'))
+                            break;
+                    } if (check.length) {
+                        for (let item of check) {
+                            let entry = await db.models.episode.findOne({where: {episode_id: item.episode_id}});
+                            if (entry)
+                                await entry.destroy();
                         }
-                        await this.handleEpisode(file, tvShow, season_id);
                     }
                 } else
-                    await this.handleEpisode(seasonDetails, tvShow)
+                    await this.handleEpisode(boolean, season, show, undefined, undefined,  undefined, []);
             }
-        }
+        } if (!boolean)
+            await this.cleanHouse();
     }
 
     /**
