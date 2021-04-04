@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const got = require('got')
 const SpringBoard = require('../../classes/springBoard')
 const {log: ln} = require("../../base/baseFunctions")
 const {search} = require("../../base/sqlize")
@@ -60,6 +59,15 @@ router.get("/rate/:id/:rate", async (req, res) => {
         await res.status(400).json(response);
     } else
         await res.json(response.item.rate);
+})
+
+router.get('/mark/:id', async (req, res) => {
+    let response = req.session.user_id ? await spring.markAsSeen(req.session.user_id, req.params.id) : false;
+    if (response.hasOwnProperty('error') || !response) {
+        response = !response ? "Query not permitted on this route" : response.error;
+        await res.status(400).json(response);
+    } else
+        await res.json(response);
 })
 
 router.get("/watch/:uuid", async (req, res) => {

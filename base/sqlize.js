@@ -108,7 +108,7 @@ const updateDB = async (obj, cond, table) => {
     return new Promise(resolve => {
         const needle = obj.cond;
         delete obj.cond
-        let sql = `UPDATE ${table} SET ? WHERE ${cond} = ?`;
+        let sql = `UPDATE nino.${table} SET ? WHERE ${cond} = ?`;
         connection.query(sql, [obj, needle], (err) => {
             if (err) {
                 console.error(err);

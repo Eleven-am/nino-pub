@@ -14,15 +14,16 @@ let nullBack;
 let name;
 let year;
 let autoScan = false;
+let config;
 let backup = [];
 const title = document.getElementById("title-text");
 const tmdb = document.getElementById("tmdb_id");
-/*const getRec = document.getElementById("info_id");
+const getRec = document.getElementById("info_id");
 const nextDown = document.getElementById("nextDown");
 const suggest = document.getElementById("suggest");
-const hide = document.getElementById("hide");
-const magnet = document.getElementById("magnet");*/
+const magnet = document.getElementById("magnet");
 const editor = document.getElementById("editor");
+const hide = document.getElementById("hide");
 const subs = document.getElementById("subs");
 const deleteEntry = document.getElementById("delete");
 const manual = {
@@ -67,14 +68,9 @@ Array.prototype.search = function (value) {
     return a;
 }
 
-window.onload = async () => {
-    let check = await sFetch('update/checkSub');
-    subs.style.display = check ? "block": "none";
-}
-
 $("#movie").on("click", async () => {
     libType = "movie";
-    //hide.style.display = 'none';
+    hide.style.display = 'none';
     title.innerText = 'scanning...';
     let response = await sFetch("update/scan/movie");
     result.style.display = "block";
@@ -85,7 +81,7 @@ $("#movie").on("click", async () => {
 $("#tv").on("click", async () => {
     libType = "tv";
     title.innerText = 'scanning...';
-    //hide.style.display = 'none';
+    hide.style.display = 'none';
     let response = await sFetch("update/scan/tv");
     result.style.display = "block";
     manual.block.style.display = "none";
@@ -123,7 +119,8 @@ const explode = async data => {
     } else {
         result.innerHTML = '';
         title.innerText = libType + " library scan complete";
-        //hide.removeAttribute('style');
+        if (config.magnet)
+            hide.removeAttribute('style');
     }
 };
 
@@ -301,7 +298,7 @@ const encode = (res, name, overview, id) => {
     }, 100)
 }
 
-/*$(document).on("click", ".search", async (e) => {
+$(document).on("click", ".search", async (e) => {
     let id = e.currentTarget.attributes["id"].nodeValue;
     let response = await sFetch('update/itemSuggestion/' + id);
 
@@ -320,16 +317,29 @@ $(document).on("click", ".suggest", async (e) => {
     let id = e.currentTarget.attributes["id"].nodeValue;
     let result = await sFetch('update/magnet/' + id);
     alert(result);
-})*/
+})
 
 $(document).on("click", ".resolve", async (e) => {
     let id = e.currentTarget.attributes["id"].nodeValue;
     let tmdb_id = e.currentTarget.attributes["data-id"].nodeValue;
     let temp = backup[parseInt(id)];
     const object = {...temp, ...{id: parseInt(tmdb_id), type: libType, gid: localX}}
-    console.log(object)
 
     submit(object);
+});
+
+$(document).on("click", ".person", async (e) => {
+    let id = e.currentTarget.attributes["id"].nodeValue;
+    let response = await sFetch('update/getPerson/' + id);
+    result.innerHTML = response.videography.map(item => `
+        <li class="suggest" overview="${item.overview}" name="${item.name}" id="${item.tmdb_id}">
+            <img src="${item.backdrop}" alt="" class="image">
+            <div>
+                <span class="name">${item.name}</span>
+                <p class="overview">${item.overview}</p>
+            </div>
+        </li>
+    `).join('');
 });
 
 const submit = object => {
@@ -400,33 +410,33 @@ tmdb.onclick = async () => {
     } else alert("select a library type");
 }
 
-/*getRec.onclick = async () => {
-    let name = prompt("Enter entries name", "");
-    let response = await sFetch("update/search/" + 0 + "/" + name);
-    let tv = response.results.filter(item => item.backdrop_path !== null).map(item => {
-        return {
-            backdrop: "https://image.tmdb.org/t/p/original" + item.backdrop_path,
-            name: item.name,
-            overview: item.overview,
-            tmdb_id: 's' + item.id,
-            popularity: item.popularity
-        }
-    })
-
-    response = await sFetch("update/search/" + 1 + "/" + name);
-    let movie = response.results.filter(item => item.backdrop_path !== null).map(item => {
-        return {
-            backdrop: "https://image.tmdb.org/t/p/original" + item.backdrop_path,
-            name: item.title,
-            overview: item.overview,
-            tmdb_id: 'm' + item.id,
-            popularity: item.popularity
-        }
-    })
-
-    response = movie.concat(tv).search(name)
-
-    result.innerHTML = response.map(item => `
+getRec.onclick = async () => {
+    let response;
+    let check = confirm('are you looking for a person or media, media[true], person[false]');
+    let name = prompt("Enter name", "");
+    if (check){
+        response = await sFetch("update/search/" + 0 + "/" + name);
+        let tv = response.results.filter(item => item.backdrop_path !== null).map(item => {
+            return {
+                backdrop: "https://image.tmdb.org/t/p/original" + item.backdrop_path,
+                name: item.name,
+                overview: item.overview,
+                tmdb_id: 's' + item.id,
+                popularity: item.popularity
+            }
+        })
+        response = await sFetch("update/search/" + 1 + "/" + name);
+        let movie = response.results.filter(item => item.backdrop_path !== null).map(item => {
+            return {
+                backdrop: "https://image.tmdb.org/t/p/original" + item.backdrop_path,
+                name: item.title,
+                overview: item.overview,
+                tmdb_id: 'm' + item.id,
+                popularity: item.popularity
+            }
+        })
+        response = movie.concat(tv).search(name)
+        result.innerHTML = response.map(item => `
             <li class="search" overview="${item.overview}" name="${item.name}" id="${item.tmdb_id}">
                 <img src="${item.backdrop}" alt="" class="image">
                 <div>
@@ -435,24 +445,46 @@ tmdb.onclick = async () => {
                 </div>
             </li>
             `).join('');
-}*/
+    } else {
+        response = await sFetch("update/findPerson/" + name);
+        result.innerHTML = response.map(item => `
+            <li class="person" id="${item.id}">
+                <img src="${item.image}" alt="" class="face">
+                <div>
+                    <span class="name">${item.name}</span>
+                    <p class="overview">${item.known_for}</p>
+                </div>
+            </li>
+        `).join('');
+    }
+}
 
 const aller = string => window.location.href = window.location.href + 'update/' + string;
 const reach = async location => sFetch('update/' + location)
     .then(response => flash(response));
+
+window.onload = async () => {
+    config = await sFetch('update/configuration');
+    if (config.magnet)
+        hide.style.display = 'block';
+    else
+        hide.style.display = 'none';
+
+    if (config.subs)
+        subs.style.display = 'block';
+    else
+        subs.style.display = 'none';
+}
 
 subs.onclick = async () => {
     let val = confirm('scan all subs or missing subs ? all[TRUE]; missing[FALSE]')
     await reach('forceScan/' + val);
 }
 
-/*suggest.onclick = () => reach('suggest');
-magnet.onclick = () => aller('magnet');
-
 nextDown.onclick = async () => {
     let val = confirm('scan for just new episodes or seasons and episodes ? episodes[TRUE], all[FALSE]')
     await reach('seasonScan/' + val);
-}*/
+}
 
 title.onclick = () => {
     let val = confirm('do you wish to leave the page ?')
@@ -460,6 +492,8 @@ title.onclick = () => {
         window.location.reload();
 }
 
+suggest.onclick = () => reach('suggest');
+magnet.onclick = () => aller('magnet');
 editor.onclick = () => aller('editor');
 deleteEntry.onclick = async () => {
     let info = confirm('would you like to delete ' + nullBack.name + '?')
@@ -471,4 +505,3 @@ deleteEntry.onclick = async () => {
         await explode(response);
     }
 }
-

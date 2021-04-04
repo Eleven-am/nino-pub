@@ -7,6 +7,9 @@ const {MyList: List, Editor} = require('./lists')
 const {admin_mail} = require('../config/nino.json')
 const {getDetails, trending, loadPortrait} = require("../base/tmdb-hook");
 const {db, insert, queryDB} = require('../base/sqlize')
+const {User} = require("../classes/auths");
+const user = new User();
+await user.createAdmin();
 
 class SpringBoard extends Views {
     /**
@@ -31,7 +34,7 @@ class SpringBoard extends Views {
             result = await movie.getInfo();
             if (!result.hasOwnProperty('error')) {
                 let position = await this.checkSeen(user_id, result.movie_id, true);
-                result.seen = position !== 0;
+                result.seen = position > 919;
 
                 if (position !== 0)
                     result.position = position >= 920 ? 100 : position / 10;
@@ -42,11 +45,9 @@ class SpringBoard extends Views {
         } else {
             let show = new Show(info_id);
             result = await show.getInfo();
-            if (!result.hasOwnProperty('error')) {
-                let user = user_id ? await db.models.user.findOne({where: {user_id}}) : null;
-                result.seen = !!(user && (await user.getWatches({where: {show_id: result.show_id}})).length);
+            if (!result.hasOwnProperty('error'))
+                result.seen = await this.checkShowSeen(user_id, result.show_id);
 
-            }
             delete result.show_id;
         }
 
@@ -56,6 +57,28 @@ class SpringBoard extends Views {
             result.section.push("Details");
             result.myRating = myRating + '%';
             result.rating = result.rating === '' ? 'unknown' : result.rating;
+        }
+
+        return result;
+    }
+
+    /**
+     * @desc check if the user has seen the show
+     * @param user_id
+     * @param show_id
+     * @returns {Promise<boolean>}
+     */
+    async checkShowSeen(user_id, show_id){
+        let result = false;
+        let user = await db.models.user.findOne({where: {user_id}});
+        if (user) {
+            let episodes = await db.models.episode.findAll({raw: true, where: {show_id}, order: [['episode_id', 'DESC']]});
+            let seenEpisodes = await user.getWatches({where: {show_id}, order: [['episode_id', 'DESC']]});
+            result = seenEpisodes.some(item => item.finished === 2);
+            if (!result){
+                let episode = episodes[0];
+                result = seenEpisodes.some(item => item.episode_id === episode.episode_id && item.position > 919);
+            }
         }
 
         return result;
@@ -80,7 +103,6 @@ class SpringBoard extends Views {
                 temp.diff = entry.name.levenstein(name);
                 return temp;
             }).sortKey('diff', true);
-            item = item.length ? item[0]: null;
             return item.length ? item[0]: {error: 'No such item exists'};
 
         } else {
@@ -191,11 +213,7 @@ class SpringBoard extends Views {
             movies = movies.concat(shows);
             return movies.randomiseDB(movies.length, 0, 3);
 
-        } else if (movies.length || shows.length) {
-            let data = movies.length ? movies : shows;
-            return data.splice(0, 5)
-
-        }else return [];
+        } else return [];
     }
 
     /**
@@ -392,6 +410,43 @@ class SpringBoard extends Views {
      */
     async getIdentity() {
         return await sFetch('https://nino-homebase.herokuapp.com/auth/' + admin_mail);
+    }
+
+    /**
+     * @desc marks every item for the corresponding show or movie as seen
+     * @param user_id
+     * @param info_id
+     * @returns {Promise<any | {error: string}>}
+     */
+    async markAsSeen(user_id, info_id) {
+        let check = false;
+        let type = info_id.charAt(0) === 'm';
+        let backup = info_id;
+        info_id = info_id.replace(/[ms]/, '');
+        let model = type ? db.models.movie: db.models.show;
+        let entry = await model.findOne({where: {tmdb_id: info_id}});
+
+        if (type && entry) {
+            entry = await db.models.watch.findOne({where: {movie_id: entry.movie_id, user_id}});
+            check = entry !== null && entry.position > 919;
+
+        } else if (!type && entry)
+            check = await this.checkShowSeen(user_id, entry.id);
+
+        if (check) {
+            if (type)
+                await db.models.watch.destroy({where: {movie_id: entry.movie_id, user_id}});
+
+            else
+                await db.models.watch.destroy({where: {show_id: entry.id, user_id}});
+
+        } else {
+            let temp = await super.markAsSeen(user_id, backup);
+            if (temp.hasOwnProperty('error'))
+                return temp;
+        }
+
+        return check === false ? "out": true;
     }
 }
 

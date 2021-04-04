@@ -19,7 +19,6 @@ module.exports = initialised => {
         const sessionStore = new MySQLStore(options);
         app.use(logIP);
         app.use(session({key: 'nino-player', secret: '44707518-7552-4c65-b7b7-dce7ec64ef80', store: sessionStore, resave: false, saveUninitialized: false}));
-
     }
 
     app.use(express.json());
@@ -31,29 +30,3 @@ module.exports = initialised => {
     app.set('view engine', 'ejs');
     return app;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//module.exports = app;
-

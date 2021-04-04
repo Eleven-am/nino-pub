@@ -299,6 +299,7 @@ const loadPortrait = async (tmdb_id, type) => {
  * @returns {Promise<{name: *, photo: string, biography: *}>}
  */
 const getPersonInfo = async (id, dBase) => {
+    dBase = dBase || null;
     const {
         name,
         biography,
@@ -313,15 +314,29 @@ const getPersonInfo = async (id, dBase) => {
         photo: 'https://image.tmdb.org/t/p/original' + profile_path,
     }
 
-    obj.movie_cast = movie.cast.reduite(dBase, 1, 'character').uniqueID('tmdb_id');
-    obj.movie_crew = movie.crew.reduite(dBase, 1).uniqueID('tmdb_id');
+    if (dBase){
+        obj.movie_cast = movie.cast.reduite(dBase, 1, 'character').uniqueID('tmdb_id');
+        obj.movie_crew = movie.crew.reduite(dBase, 1).uniqueID('tmdb_id');
 
-    obj.tv_cast = tv.cast.reduite(dBase, 0, 'character').uniqueID('tmdb_id');
-    obj.tv_crew = tv.crew.reduite(dBase, 0).uniqueID('tmdb_id');
+        obj.tv_cast = tv.cast.reduite(dBase, 0, 'character').uniqueID('tmdb_id');
+        obj.tv_crew = tv.crew.reduite(dBase, 0).uniqueID('tmdb_id');
 
-    obj.production = obj.tv_crew.concat(obj.movie_crew).sortKey('tmdb_id', true);
-    delete obj.tv_crew;
-    delete obj.movie_crew;
+        obj.production = obj.tv_crew.concat(obj.movie_crew).sortKey('tmdb_id', true);
+        delete obj.tv_crew;
+        delete obj.movie_crew;
+
+    } else {
+        obj.videography = movie.cast.concat(movie.crew).concat(tv.cast).concat(tv.crew).sortKey('popularity', false).filter(item => item.backdrop_path !== null).map(item => {
+            return {
+                role: item.job,
+                tmdb_id: (item.name ? 's':'m') + item.id,
+                overview: item.overview,
+                name: item.name ? item.name: item.title,
+                backdrop: 'https://image.tmdb.org/t/p/original' + item.backdrop_path,
+            }
+        }).uniqueID('tmdb_id');
+    }
+
     return obj;
 }
 
@@ -485,6 +500,25 @@ const getFromIMDB = async imdb_id => {
     return response.length ? response[0] : false;
 }
 
+/**
+ * @desc searches on TMDB for people that match the name searched
+ * @param name
+ * @returns {Promise<[*]>}
+ */
+const findPerson = async name => {
+    let people = await sFetch(base + 'search/person?api_key=' + apiKey + '&language=en-US&query=' + name + '&page=1&include_adult=true');
+    return people.results.filter(item => item.profile_path !== null).map(item => {
+        return {
+            id: item.id,
+            name: item.name,
+            diff: item.name.levenstein(name),
+            popularity: item.popularity,
+            image: 'https://image.tmdb.org/t/p/original' + item.profile_path,
+            known_for: item.known_for.map((entry, i) => `${entry.name ? entry.name: entry.title}${i === item.known_for.length - 2 ? ' and ': ', '}`).join('').replace(/, $/, '.')
+        }
+    }).sortKeys('diff', 'popularity', true, false);
+}
+
 module.exports = {
     trending,
     getEpisodeInfo,
@@ -503,6 +537,7 @@ module.exports = {
     loadPortrait,
     fanArtImages,
     getTvRating,
+    findPerson,
     getTrailer,
     search,
     getProdDetails

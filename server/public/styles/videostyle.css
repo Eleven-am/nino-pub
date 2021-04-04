@@ -148,7 +148,6 @@
     transition: opacity 0.5s linear;
 }
 
-
 #back-button, #info-back-button {
     position: fixed;
     top: 7vh;
@@ -167,7 +166,7 @@
     top: 7vh;
     right: 2vw;
     height: 5vh;
-    width: 16vw;
+    width: 18vw;
     background-color: rgba(1, 16, 28, .9);
     border-radius: 1vw;
     display: flex;
@@ -176,7 +175,7 @@
     padding: 0 1vw;
 }
 
-#volume, #downloadBtn {
+#volume, #downloadBtn  {
     fill: rgba(255, 255, 255, .5);
     stroke: rgba(255, 255, 255, .5);
     stroke-width: 1;
@@ -187,8 +186,9 @@
     cursor: pointer;
 }
 
-#shareFrame{
+#shareFrame, #airPlay, #castButton{
     stroke: rgba(255, 255, 255, .5);
+    fill: rgba(0,0,0,0);
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -293,7 +293,7 @@
     stroke: rgba(144, 197, 240, .9);
 }
 
-#shareFrame:hover{
+#shareFrame:hover, #airPlay:hover, #castButton:hover {
     stroke-width: 3.5;
     stroke: rgba(144, 197, 240, .9);
 }

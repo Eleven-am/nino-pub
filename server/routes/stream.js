@@ -2,20 +2,21 @@ const express = require('express')
 const router = express.Router()
 const DriveHandler = require('../../classes/driveHandler');
 const SpringBoard = require("../../classes/springBoard");
-const {Auth} = require("../../classes/auths");
+const {Auth, User} = require("../../classes/auths");
 let spring = new SpringBoard();
 let drive = new DriveHandler();
+let user = new User();
 
 router.get('/:auth', async (req, res) => {
-    let response = req.session.user_id ? await spring.getLocation(req.params.auth) : false;
+    let response = await spring.getLocation(req.params.auth);
     const range = req.headers.range;
-    if (!response.hasOwnProperty('error') && response.user_id === req.session.user_id)
+    if (!response.hasOwnProperty('error'))
         if (range)
             await drive.streamFile(response.location, res, range);
         else
-            await drive.rawDownload(response.location, 'videoFile', res, 'video/mp4');
+            await drive.rawDownload(response.location, 'videoFile', res, response.mimeType);
 
-    else if (response.hasOwnProperty('error') || !response || response.user_id !== req.session.user_id || range === undefined) {
+    else {
         response = !response ? "Query not permitted on this route" : response.error;
         await res.status(400).json(response);
 

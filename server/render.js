@@ -1,3 +1,4 @@
+const SpringBoard = require('../classes/springBoard')
 const {getPersonInfo, getProdDetails} = require("../base/tmdb-hook");
 
 const ejsHandler = async (req, res, file) => {
@@ -5,7 +6,6 @@ const ejsHandler = async (req, res, file) => {
     let link = req.protocol + '://' + req.get('Host');
     let overview = "Stream movies & TV shows directly to you from Roy Ossai's Private Server";
     if (file === undefined){
-        const SpringBoard = require('../classes/springBoard')
         let regex = /(?<type>\w+)=(?<value>[^*]+)/;
         if (req.url === '/')
             obj = {type: 'def', value: 'nino'};

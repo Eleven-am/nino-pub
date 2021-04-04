@@ -3,8 +3,6 @@ const infoBlock = {
     backdrop: document.querySelector("#info-background img"),
     box: document.getElementById("info-holder"),
     overview: document.querySelector("#info-overview span"),
-    rating: document.getElementById("rating"),
-    genre: document.getElementById("genre"),
     back: document.getElementById("info-back-button"),
     section: document.getElementById("info-list"),
     review: document.getElementById("review-fill"),
@@ -58,6 +56,21 @@ const personInfo = {
         movie: document.getElementById("movie-roles"),
         tv: document.getElementById("tv-roles"),
         prod: document.getElementById("crew-roles")
+    }
+}
+
+const seen = {
+    holder: document.getElementById('seen'),
+    notSeen: document.getElementById('notSeenSvg'),
+    seen: document.getElementById('seenSvg'),
+    display(value) {
+        if (value) {
+            this.seen.style.display = 'block';
+            this.notSeen.style.display = "none";
+        } else {
+            this.seen.style.display = 'none';
+            this.notSeen.style.display = "block";
+        }
     }
 }
 
@@ -122,6 +135,7 @@ let myFrame = {
     player: undefined,
     MouseOver: false,
     trailer: false,
+    cjs: null,
     id: "x"
 }
 
@@ -152,6 +166,8 @@ const ninoPlayer = {
         rewind: document.querySelector('.video-container .controls button.rewind'),
         fastForward: document.querySelector('.video-container .controls button.fast-forward'),
         next: document.getElementById("nextButton"),
+        airPlay: document.getElementById('airPlay'),
+        cast: document.getElementById('castButton'),
         volume: document.getElementById("volume")
     }, infoTexts: {
         info: document.getElementById("video-info"),
@@ -175,8 +191,10 @@ const ninoPlayer = {
         guest: false,
         active: false,
         shuffleMode: false,
-        countdownStarted: false
+        countdownStarted: false,
+        playPause: false
     }, video: document.querySelector('.video-container video'),
+    userChromeCast: null,
     location: false,
     activeSub: 'na',
     subs: [],
@@ -199,7 +217,7 @@ let ssd = {movies: false, tvShows: false};
 const isSafari = navigator.vendor && navigator.vendor.indexOf('Apple') > -1 &&
     navigator.userAgent && navigator.userAgent.indexOf('CriOS') === -1 && navigator.userAgent.indexOf('FxiOS') === -1;
 
-Array.prototype.search = function (value) {
+Array.prototype.Lookup = function (value) {
     let temp = this.filter(item => item.name.toLowerCase().startsWith(value.toLowerCase()));
     let a = temp.concat(this);
     for (let i = 0; i < a.length; ++i) {
@@ -291,7 +309,7 @@ const loadAnimate = (array) => {
     for (let i = 0; i < array.length; i++) {
         const pos = i === 2 ? "in" : "out";
         const img = array[i].logo !== "" ? `<img class="img2" src="${array[i].logo}" alt="${array[i].name}">` : `<label class="randLabel">${array[i].name}</label>`;
-        htmlString += `<div class="info"alt="${(array[i].external ? "h" + '/' + array[i].external+ '/' :"") + (array[i].type === 1 ? "m" : "s") + array[i].tmdb_id}">
+        htmlString += `<div class="info" alt="${array[i].type === 1 ? "m" + array[i].tmdb_id : "s" + array[i].tmdb_id}">
                     <div class="recent-div ${pos} number${i}">
                         ${img}
                         <img class="img1" src="${array[i].backdrop}">
@@ -339,11 +357,7 @@ const loadFunction = async hoc => {
     }
 
     type === "basic" ? loadList(data, element) : loadChoice(data, element);
-
-    if (data === false || data.length < 1 || data.hasOwnProperty('error'))
-      document.getElementById(container).style.display = "none";
-    else
-        document.getElementById(container).removeAttribute("style");
+    document.getElementById(container).removeAttribute("style");
     return next;
 }
 
@@ -381,9 +395,9 @@ const getCont = async () => {
     if (data !== false && data.length >= 1) {
         document.getElementById(container).removeAttribute("style");
         element.innerHTML = data.map(file => `
-            <li class="info" alt="${(file.external ? "h" + '/' + file.external + '/': "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}">
+            <li class="info" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
                 <div class="continue-inner-div">
-                    <div class="editors-img play" data-id="${(file.external ? "h" + '/' + file.external + '/': "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}">
+                    <div class="editors-img play" data-id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
                         <img class="editors-backdrop" src="${file.backdrop}" id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
                         ${file.logo !== '' ? `<img class="editors-logo" src="${file.logo}" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">` : `<span class="editors-label">${file.name}</span>`}
                         <div class="cont-progress-groove" style="display: ${file.position === 0 ? "none" : "flex"}"><div class="progress-fill" style="width: ${file.position === 100 ? 100 : file.position / 10}%"></div></div>
@@ -415,7 +429,7 @@ const userFunc = async hoc => {
 
 const loadList = (blobs, element) => {
     let string = blobs.map(file => `
-        <li class="info" alt="${(file.external ? "h" + '/' + file.external + '/' : "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}">
+        <li class="info" alt="${(file.type === 1 ? "m" : "s") + file.tmdb_id}">
             <img src="${file.poster}"  alt="${(file.type === 1 ? "m" : "s") + file.tmdb_id}">
             ${file.tag ? `<div class="basic-tags"><span>${file.tag}</span></div>` : ''}
         </li>
@@ -424,20 +438,19 @@ const loadList = (blobs, element) => {
 }
 
 const loadChoice = (blobs, element) => {
-    if (!blobs.hasOwnProperty('error'))
-        element.innerHTML = blobs.map(file => `
-            <li class="info" alt="${(file.external ? "h" + '/' + file.external + '/' : "") + (file.type === 1 ? "m" : "s") + file.tmdb_id}" data-id="${file.trailer}">
-                <div class="editors-inner-div">
-                    <div class="editors-img">
-                        <img class="editors-backdrop" src="${file.backdrop}" id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
-                        ${file.logo !== '' ? `<img class="editors-logo" src="${file.logo}" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">` : `<span class="editors-label">${file.name}</span>`}
-                    </div>
-                    <div class="editors-info-div">
-                        <span>${file.overview}</span>
-                    </div>
+    element.innerHTML = blobs.map(file => `
+        <li class="info" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}" data-id="${file.trailer}">
+            <div class="editors-inner-div">
+                <div class="editors-img">
+                    <img class="editors-backdrop" src="${file.backdrop}" id="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">
+                    ${file.logo !== '' ? `<img class="editors-logo" src="${file.logo}" alt="${file.type === 1 ? "m" + file.tmdb_id : "s" + file.tmdb_id}">` : `<span class="editors-label">${file.name}</span>`}
                 </div>
-            </li>
-        `).join('');
+                <div class="editors-info-div">
+                    <span>${file.overview}</span>
+                </div>
+            </div>
+        </li>
+    `).join('');
 }
 
 const buildInfo = info => {
@@ -468,6 +481,7 @@ const buildInfo = info => {
     ssd.name = info.name;
     ssd.info_id = info.id;
     ssd.section = info.section;
+    seen.display(info.seen);
     infoBlock.backdrop.src = info.backdrop;
     infoBlock.position.style.width = "0%";
     infoBlock.box.scrollTop = 0;
@@ -477,6 +491,7 @@ const buildInfo = info => {
     infoBlock.hls.setAttribute("data-id", id);
     infoBlock.play.setAttribute("data-id", id);
     addToList.holder.setAttribute("data-id", id);
+    seen.holder.setAttribute("data-id", id);
     infoBlock.shuffle.setAttribute("data-id", `x${info.id}`);
     infoBlock.trailer.setAttribute("data-id", info.trailer);
 
@@ -520,10 +535,8 @@ const buildInfo = info => {
     }
 
     infoBlock.box.replaceChild(logo, infoBlock.box.childNodes[1]);
-    infoBlock.genre.innerText = info.genre;
     infoBlock.block.removeAttribute("class");
     infoBlock.block.style.display = "block";
-    infoBlock.rating.innerText = info.rating;
     infoBlock.overview.innerHTML = info.overview;
     infoBlock.review.style.width = (info.review * 10) + "%";
     infoBlock.review.setAttribute('myRating', info.myRating);
@@ -531,9 +544,11 @@ const buildInfo = info => {
     infoBlock.detailOverview.innerText = info.overview;
     infoBlock.suggestion.scrollLeft = 0;
     let prodTeam = info.crew !== undefined ? "Production Team:" : "";
-    infoBlock.release.innerHTML =
-        `<div id="release-div">Release: <span class="info-basic">${info.release}</span></div>
+    infoBlock.release.innerHTML = `
+        <div id="genres">Genre: <span class="info-basic">${info.genre}</span></div>
+        <div id="release-div">Release: <span class="info-basic">${info.release}</span></div>
         <div id="runtime-div">Runtime: <span class="info-basic">${info.runtime}</span></div>
+        <div><span id="rating">${info.rating}</span></div>
         ${info.crew === undefined ? "" : `<br><div>${prodTeam}</div><ul id='crew'></ul>`}
         ${info.production.length ? `<br><div>Companies</div><ul id="prod_logos">${info.production.map(item => `<li class="prodCompany" data-id="${item.id}"><span>${item.name}</span></li>`).join('')}</ul>` : ""}`;
 
@@ -546,6 +561,8 @@ const buildInfo = info => {
     infoBlock.cast.innerHTML = info.cast.map(person => `
             <span class="person" data-id="${person.id}">${person.name}</span><br>
         `).join('');
+    if (myFrame.cjs && myFrame.cjs.connected)
+        myFrame.cjs.ping({action: 'displayInfo', name: info.name, backdrop: info.backdrop, logo: info.logo, overview: info.overview});
 
     handleOptions(info.section[0])
     loader.fade();
@@ -734,7 +751,8 @@ const loggedInLoader = async () => {
         primary.insertAdjacentHTML("afterbegin", string);
 
         let next = await getList();
-
+        loadCast();
+        loadAirplay();
         while (next !== false)
             next = next === "continue" ? await getCont() : await userFunc(next);
 
@@ -747,7 +765,7 @@ const searchRes = async value => {
     if (value.length) {
         let matches = await sFetch('info/search/' + value);
         if (matches.length) {
-            matches = matches.search(value).splice(0, 16);
+            matches = matches.Lookup(value).splice(0, 16);
             showHtml(matches);
         } else
             search.output.style.display = "none";
@@ -759,7 +777,7 @@ const showHtml = matches => {
     if (matches.length > 0) {
         search.result.innerHTML = matches.map(match => `
         <li data-id="${match.tmdb_id}" class="searchRes">
-            <img class="info searchImages" src="" alt="${(match.external ? "h" + '/' + match.external + '/' : "") + (match.type === 1 ? "m" : "s") + match.tmdb_id}">
+            <img class="info searchImages" src="" alt="${(match.type === 1 ? "m" : "s") + match.tmdb_id}">
             <span>${match.name}</span>
         </li>
         `).join('');
@@ -854,28 +872,31 @@ const loadModals = (object, callback) => {
 
 const slideView = direction => {
     let array = [];
-    let searchResult = document.querySelectorAll('.searchRes');
-    if (direction === 'down') {
-        array.push(searchResult.length - 1);
-        for (let i = 0; i < searchResult.length - 1; i++)
-            array.push(i)
+    if (document.getElementById('searchHover')) {
+        document.getElementById('searchHover').removeAttribute('id')
+        let searchResult = document.querySelectorAll('.searchRes');
+        if (direction === 'down') {
+            array.push(searchResult.length - 1);
+            for (let i = 0; i < searchResult.length - 1; i++)
+                array.push(i)
 
-    } else if (direction === 'up') {
-        for (let i = 1; i < searchResult.length; i++)
-            array.push(i)
-        array.push(0);
-    }
+        } else if (direction === 'up') {
+            for (let i = 1; i < searchResult.length; i++)
+                array.push(i)
+            array.push(0);
+        }
 
-    for (let i = 0; i < array.length; i++) {
-        for (let j = 0; j < array.length; j++) {
-            if (i === array[j]) {
-                search.result.appendChild(searchResult[j]);
-                break;
+        for (let i = 0; i < array.length; i++) {
+            for (let j = 0; j < array.length; j++) {
+                if (i === array[j]) {
+                    search.result.appendChild(searchResult[j]);
+                    break;
+                }
             }
         }
     }
 
-    searchResult = document.querySelectorAll('.searchRes');
+    let searchResult = document.querySelectorAll('.searchRes');
     searchResult[0].setAttribute('id', 'searchHover');
 }
 
@@ -914,6 +935,7 @@ $(document).ready(async function () {
     while (next !== false)
         next = await loadFunction(next);
 
+
     loader.fade();
 });
 
@@ -922,7 +944,7 @@ $(document).on("click", ".info", async function (event) {
     let link = event.currentTarget.attributes["alt"].nodeValue;
     let response = await sFetch(`info/${link}`);
     ssd.name = response.name;
-    handleHistory("info", (response.type === "movie" ? "m" : "s") + response.id, response.name, (response.type === "movie" ? "movie" : "show") + '=' + response.name.replace(/\s/g, '+').replace(/\//g, '-'));
+    handleHistory("info", (response.type === "movie" ? "m" : "s") + response.id, response.name, (response.type === "movie" ? "movie" : "show") + '=' + response.name.replace(/ /g, '+'));
     buildInfo(response);
 });
 
@@ -1027,20 +1049,10 @@ infoBlock.closeSeason.onclick = () => handleOptions("Seasons");
 search.input.addEventListener('keyup', async function (event) {
     let searchResult = document.querySelectorAll('.searchRes');
     if (event.code === 'ArrowUp') {
-        if (searchResult.length) {
-            if (document.getElementById('searchHover'))
-                document.getElementById('searchHover').removeAttribute('id')
-
-            slideView('up')
-        }
+        if (searchResult.length) slideView('up')
 
     } else if (event.code === 'ArrowDown') {
-        if (searchResult.length) {
-            if (document.getElementById('searchHover'))
-                document.getElementById('searchHover').removeAttribute('id')
-
-            slideView('down')
-        }
+        if (searchResult.length) slideView('down')
 
     } else {
         await searchRes(search.input.value)
@@ -1061,6 +1073,7 @@ infoBlock.back.onclick = () => {
         if (personInfo.box.classList.contains("fadeLoader") && prod.box.classList.contains("fadeLoader")) {
             infoBlock.block.setAttribute("class", "fadeLoader");
             document.body.style.overflow = "auto";
+            myFrame.cjs.ping({action: 'destroy'});
             handleHistory('nino', 'home', 'nino', '/');
         } else {
             personInfo.box.setAttribute("class", "fadeLoader");
@@ -1095,6 +1108,27 @@ addToList.holder.onclick = async () => {
     }
 
     await getList();
+}
+
+seen.holder.onclick = async () => {
+    let id = seen.holder.attributes["data-id"].nodeValue;
+    let type = id.charAt(0) === 'm';
+    let response = await sFetch("info/mark/" + id);
+    let lists = document.querySelectorAll('#continue-list .info');
+    lists.forEach(item => {
+        if (item.attributes["alt"].nodeValue === id) item.remove();
+    });
+    response = response === "out";
+    if (response && type) {
+        infoBlock.position.style.width = '100%';
+        document.getElementById("divider").style.background = "rgba(144, 197, 240, .2)";
+
+    } else {
+        infoBlock.position.style.width = "0%";
+        document.getElementById("divider").style.background = "rgba(255, 255, 255, .6)";
+    }
+
+    seen.display(response);
 }
 
 infoBlock.trailer.onclick = event => {

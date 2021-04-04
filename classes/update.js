@@ -1,5 +1,5 @@
 const {Editor} = require('./lists')
-//const Magnet = require('./magnet')
+const Magnet = require('./magnet')
 const path = require('path')
 const DriveHandler = require('./driveHandler')
 const {db, type, insert, Op, update} = require('../base/sqlize')
@@ -14,13 +14,17 @@ const {
     getCollection
 } = require('../base/tmdb-hook')
 const OS = require('opensubtitles-api')
-const {openSubtitles} = require('../config/nino.json');
-const OpenSubtitles = openSubtitles ? new OS({...openSubtitles, ...{ssl: true}}): null;
-const rename = require('locutus/php/strings/strtr')
-const {log, aJax, sFetch} = require("../base/baseFunctions")
+let OpenSubtitles = null;
+const rename = require('locutus/php/strings/strtr');
+const {log: ln, aJax, sFetch} = require("../base/baseFunctions")
 const {movies, tvShows, backdrop} = require('../config/nino.json').library
 const drive = new DriveHandler();
-const logFile = 'update';
+const log = (pos, info) => ln(pos, 'update', info);
+
+if (require('../config/nino.json').openSubtitles !== null) {
+    const {useragent, password, username} = require('../config/nino.json').openSubtitles
+    OpenSubtitles = new OS({useragent, username, password, ssl: true});
+}
 
 let dicDo = {
     " (1080p HD).m4v": "", " (HD).m4v": "", " (4K).m4v": "",
@@ -35,7 +39,7 @@ let dicDo = {
     "EXTENDED": "", "RARBG": "", "anoXmous": "",
     "Deceit": "", "BOKUTOX": "", " ( FIRST TRY)": "", "IMAX": "",
     "UNRATED": "", "BrRIp": "", "AAC2": "", "0PRiNCE": "", "Brrip": "",
-    ".": " ", "Directors Cut": "",
+    ".": " ", "Directors Cut": "", "DIRECTORS.CUT": "",
 };
 
 const Sub = db.define('subs', {
@@ -51,7 +55,7 @@ const Sub = db.define('subs', {
 Sub.sync().catch(err => console.error(err));
 const subs = {eng: '', fre: '', ger: ''};
 
-class Update /*extends Magnet */{
+class Update extends Magnet {
     /**
      * @desc scans the library for a new file / folder and adds it to the database
      * @param type
@@ -85,7 +89,7 @@ class Update /*extends Magnet */{
         return response;
     }
 
-   /**
+    /**
      * @desc adds a list of entries to database
      * @param name
      * @param ids
@@ -186,7 +190,7 @@ class Update /*extends Magnet */{
             }
         } else
             console.log(file)
-        //await drive.deleteFile(file.id)
+            //await drive.deleteFile(file.id)
 
         return {check, previous}
     }
@@ -297,7 +301,7 @@ class Update /*extends Magnet */{
                         }
                     }
                 } else
-                    await this.handleEpisode(boolean, season, show, undefined, undefined,  undefined, []);
+                   await this.handleEpisode(boolean, season, show, undefined, undefined,  undefined, []);
             }
         } if (!boolean)
             await this.cleanHouse();
@@ -338,37 +342,36 @@ class Update /*extends Magnet */{
      * @returns {Promise<void>}
      */
     async loadSubs() {
-        if (OpenSubtitles !== null){
-            let subs = await Sub.findAll({raw: true});
-            await Sub.destroy({where: {id: {[Op.gt]: 0}}});
-            if (subs.length > 0) {
-                let obj = subs[0];
-                subs.shift();
+        let subs = await Sub.findAll({raw: true});
+        await Sub.destroy({where: {id: {[Op.gt]: 0}}});
+        log(90, 'in')
+        if (subs.length > 0) {
+            let obj = subs[0];
+            subs.shift();
 
-                subs = subs.map(sub => {
-                    delete sub.id;
-                    return sub;
-                });
+            subs = subs.map(sub => {
+                delete sub.id;
+                return sub;
+            });
 
-                if (subs.length)
-                    await Sub.bulkCreate(subs);
+            if (subs.length)
+                await Sub.bulkCreate(subs);
 
-                let result = await this.getSub(obj.sub, obj.type);
-                let model = obj.type === 1 ? db.models.movie : db.models.episode;
-                let cond = obj.type === 1 ? {movie_id: obj.sub} : {episode_id: obj.sub};
-                let table = obj.type === 1 ? 'movies' : 'episodes';
-                let item = await model.findOne({where: cond})
-                if (item) {
-                    item = item.get();
-                    ['eng', 'fre', 'ger'].forEach(e => delete item[e]);
-                    item = {...item, ...result};
-                    await update(table, table.replace(/s$/, '_id'), obj.sub, item);
-                    log(58, logFile, obj.sub + ' from ' + (obj.type === 0 ? 'episodes' : 'movies') + ' has been updated');
-                    setTimeout(async () => await this.loadSubs(), 1000);
-                }
-            } else
-                log(64, logFile, 'done');
-        }
+            let result = await this.getSub(obj.sub, obj.type);
+            let model = obj.type === 1 ? db.models.movie : db.models.episode;
+            let cond = obj.type === 1 ? {movie_id: obj.sub} : {episode_id: obj.sub};
+            let table = obj.type === 1 ? 'movies' : 'episodes';
+            let item = await model.findOne({where: cond})
+            if (item) {
+                item = item.get();
+                ['eng', 'fre', 'ger'].forEach(e => delete item[e]);
+                item = {...item, ...result};
+                await update(table, table.replace(/s$/, '_id'), obj.sub, item);
+                log(58, obj.sub + ' from ' + (obj.type === 0 ? 'episodes' : 'movies') + ' has been updated');
+                setTimeout(async () => await this.loadSubs(), 1000);
+            }
+        } else
+            log(64, 'done');
     }
 
     /**
@@ -378,48 +381,57 @@ class Update /*extends Magnet */{
      * @returns {Promise<{ger: string, fre: string, eng: string}>}
      */
     async getSub(file_id, type) {
-        let obj;
-        if (type === 0) {
-            let entry = await db.models.episode.findOne({
-                where: {episode_id: file_id},
-                include: [{model: db.models.show, attributes: ['tmdb_id']}]
-            });
+        if (OpenSubtitles !== null){
+            let obj;
+            if (type === 0) {
+                let entry = await db.models.episode.findOne({
+                    where: {episode_id: file_id},
+                    include: [{model: db.models.show, attributes: ['tmdb_id']}]
+                });
 
-            if (entry) {
-                let {season_id, episode, gid} = entry.get();
-                let file = await drive.getFile(gid);
-                let {imdb_id} = await getExternalId(entry.show.get('tmdb_id'), 0);
-                obj = {season: season_id, filesize: file.size, filename: file.name, episode: episode, imdbid: imdb_id};
+                if (entry) {
+                    let {season_id, episode, gid} = entry.get();
+                    let file = await drive.getFile(gid);
+                    let {imdb_id} = await getExternalId(entry.show.get('tmdb_id'), 0);
+                    obj = {
+                        season: season_id,
+                        filesize: file.size,
+                        filename: file.name,
+                        episode: episode,
+                        imdbid: imdb_id
+                    };
+                }
+
+            } else {
+                let entry = await db.models.movie.findOne({where: {movie_id: file_id}})
+                if (entry) {
+                    let {gid, tmdb_id} = entry.get();
+                    let file = await drive.getFile(gid);
+                    let {imdb_id} = await getExternalId(tmdb_id, 1);
+                    obj = {filesize: file.size, filename: file.name, imdbid: imdb_id};
+                }
             }
 
-        } else {
-            let entry = await db.models.movie.findOne({where: {movie_id: file_id}})
-            if (entry) {
-                let {gid, tmdb_id} = entry.get();
-                let file = await drive.getFile(gid);
-                let {imdb_id} = await getExternalId(tmdb_id, 1);
-                obj = {filesize: file.size, filename: file.name, imdbid: imdb_id};
+            if (obj) {
+                obj.extensions = ['srt', 'vtt'];
+                let keys = ['en', 'fr', 'de'];
+                let lang = ['eng', 'fre', 'ger'];
+                return await OpenSubtitles.search(obj)
+                    .then(temp => {
+                        if (temp !== undefined) {
+                            let item = {};
+                            keys.forEach((value, pos) => {
+                                item[lang[pos]] = temp[value] === undefined ? '' : temp[value].url;
+                            });
+                            return item;
+                        } else return subs;
+                    }).catch(error => {
+                        console.log(error);
+                        return subs;
+                    })
             }
-        }
-
-        if (obj) {
-            obj.extensions = ['srt', 'vtt'];
-            let keys = ['en', 'fr', 'de'];
-            let lang = ['eng', 'fre', 'ger'];
-            return await OpenSubtitles.search(obj)
-                .then(temp => {
-                    if (temp !== undefined) {
-                        let item = {};
-                        keys.forEach((value, pos) => {
-                            item[lang[pos]] = temp[value] === undefined ? '' : temp[value].url;
-                        });
-                        return item;
-                    } else return subs;
-                }).catch(error => {
-                    console.log(error);
-                    return subs;
-                })
-        }
+        } else
+            log(433, 'OpenSubtitles has not yet been set up on this device, consider doing so');
         return subs;
     }
 
@@ -548,7 +560,7 @@ class Update /*extends Magnet */{
     /**
      * @desc gets the next season for all possible shows on the database if available
      * @returns {Promise<void>}
-     *//*
+     */
     async getNextSeason(value) {
         let shows = await db.models.show.findAll({order: [['id', 'DESC']]});
         for (let item of shows) {
@@ -557,7 +569,7 @@ class Update /*extends Magnet */{
             if (file.hasOwnProperty('url'))
                 await this.downloadTorrent(file.url)
         }
-    }*/
+    }
 
     /**
      * @desc searches several DBs for images for a show || movie
@@ -592,7 +604,7 @@ class Update /*extends Magnet */{
                     else if (item.title === 'TV Shows')
                         shows = item.items;
 
-                res.apple = parseInt(`${type}`) === 1? movies : shows;
+                res.apple = parseInt(`${type}`) === 1 ? movies : shows;
             }
         }
 
@@ -615,9 +627,9 @@ class Update /*extends Magnet */{
      * @param tmdb_id
      * @returns {Promise<{apple: *[], release_date: *, name: *, nino: null}>}
      */
-    async interpretImages(type, tmdb_id){
+    async interpretImages(type, tmdb_id) {
         let response = await this.getImages(type, tmdb_id);
-        let category = parseInt(type) === 1 ? 'Movie': 'Show';
+        let category = parseInt(type) === 1 ? 'Movie' : 'Show';
         let info = response.apple.map(item => {
             return {
                 name: item.title,
@@ -628,7 +640,7 @@ class Update /*extends Magnet */{
 
         info = info.filter(item => item.category === category);
         let result = [];
-        for (let item of info){
+        for (let item of info) {
             let res = item.images;
             res = {
                 poster: res.coverArt16X9 ? res.coverArt16X9 : '',
@@ -660,7 +672,7 @@ class Update /*extends Magnet */{
      */
     async sift(type, tmdb_id) {
         let res;
-        let category = type === 1 ? 'Movie': 'Show';
+        let category = type === 1 ? 'Movie' : 'Show';
         let response = await this.getImages(type, tmdb_id);
         let trailer = await getTrailer(tmdb_id, type);
         let info = response.apple.map(item => {
@@ -673,7 +685,7 @@ class Update /*extends Magnet */{
         });
         let {name, year} = response;
 
-        info = info.filter(item => item.category === category && (year -1 <= item.year && item.year <= year +1) && item.name.levenstein(name) < 3);
+        info = info.filter(item => item.category === category && (year - 1 <= item.year && item.year <= year + 1) && item.name.levenstein(name) < 3);
 
         if (info.length) {
             res = info[0].images;
@@ -712,7 +724,7 @@ class Update /*extends Magnet */{
 
         for (let item of films) {
             let entry = await db.models.movie.findOne({where: {gid: item.id}});
-            if (entry === null){
+            if (entry === null) {
                 let regex = /(?<name>^.*?)\.(?<year>\d{4}).*?\d+p[^"]+/
                 let matches = item.name.match(regex);
 
@@ -741,16 +753,16 @@ class Update /*extends Magnet */{
                         results.splice(i, 1)
 
                 if (results.length < 1 && backup.length)
-                    results = backup.filter(item => (year-1 <= item.year && item.year <= year+1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
+                    results = backup.filter(item => (year - 1 <= item.year && item.year <= year + 1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
 
                 else {
                     let temp = results.filter(item => item.year === year && item.backdrop !== null && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
-                    results = temp.length ? temp : backup.filter(item => (year-1 <= item.year && item.year <= year+1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
+                    results = temp.length ? temp : backup.filter(item => (year - 1 <= item.year && item.year <= year + 1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
                     results = results.length ? results : backup.filter(item => year < item.year && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
                 }
 
                 if (results.length !== 1)
-                    results = results.filter(item => (year < item.year && item.year <= year+1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
+                    results = results.filter(item => (year < item.year && item.year <= year + 1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
 
                 if (results.length === 1) {
                     let obj = await this.sift(1, results[0].tmdb_id);

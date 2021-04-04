@@ -1,28 +1,27 @@
 const express = require('express')
 const {User} = require("../../classes/auths");
-const {admin_mail} = require('../../config/nino.json')
-const router = express.Router();
-const Update = require("../../classes/update");
-const {getDetails} = require("../../base/tmdb-hook");
+const router = express.Router()
+const Update = require("../../classes/update")
+const {getDetails, findPerson, getPersonInfo} = require("../../base/tmdb-hook");
 const {takeFive} = require("../../base/baseFunctions");
 const user = new User();
 const update = new Update();
 
-/*router.get('/suggest', async (req, res) => {
+router.get('/suggest', async (req, res) => {
     let response = 'Please authenticate';
-    let admin = await user.findUser({email: admin_mail})
-    if (req.session.user_id === admin.user_id) {
+    if (await user.checkAuthorisedUser(req.session.user_id)){
         await res.json('processing');
-        await update.getMagnets(admin.user_id);
+        await update.getMagnets(req.session.user_id);
     } else await res.json(response);
-})*/
-
-router.get('/checkSub', (req, res) => {
-    res.json(update.checkSub())
 })
 
 router.get('/getLists', async (req, res) => {
     await res.json(await update.getLists());
+})
+
+router.get('/configuration', async (req, res) => {
+    let response = {magnet: update.delugeActive(), subs: update.checkSub()}
+    await res.json(response);
 })
 
 router.get("/scan/:type", async (req, res) => {
@@ -40,26 +39,25 @@ router.get('/forceScan/:cond', async (req, res) => {
     } else await res.json(response);
 })
 
-/*router.get('/seasonScan/:cond', async (req, res) => {
+router.get('/seasonScan/:cond', async (req, res) => {
     let response = 'Please authenticate';
     let val = req.params.cond === 'true';
-    let admin = await user.findUser({email: admin_mail})
-    if (req.session.user_id === admin.user_id) {
+    if (await user.checkAuthorisedUser(req.session.user_id)){
         await res.json('getting ' + (val ? 'episodes' : 'new seasons and episodes') + ' for shows on the library');
         await update.getBackdrops();
         await update.getNextSeason(val);
     } else await res.json(response);
-})*/
+})
 
 router.get('/itemSuggestion/:tmdb_id', async (req, res) => {
     let response = await update.jsonRec(req.params.tmdb_id);
     await res.json(response);
 })
 
-/*router.get('/magnet/reset/:id', async (req, res) => {
+router.get('/magnet/reset/:id', async (req, res) => {
     req.session.data = await update.displayMagnets(req.params.id);
     await res.json(true);
-})*/
+})
 
 router.get('/magnet/showSuggestion', (req, res) => {
     let data = takeFive(req.session.data, 20);
@@ -67,19 +65,19 @@ router.get('/magnet/showSuggestion', (req, res) => {
     res.json(data.result);
 })
 
-/*router.get('/magnet/opened/:id', async (req, res) => {
+router.get('/magnet/opened/:id', async (req, res) => {
     let response = update.inform(req.params.id);
     await res.json(response);
-})*/
+})
 
-/*router.get('/magnet/:info_id', async (req, res) => {
+router.get('/magnet/:info_id', async (req, res) => {
     let response = await update.getTMdbMagnet(req.params.info_id);
     if (response.hasOwnProperty('url')) {
         await update.downloadTorrent(response.url)
         response = 'downloading';
     }
     await res.json(response);
-})*/
+})
 
 router.post("/item", async (req, res) => {
     let response = await update.updateEntry(req.body);
@@ -134,6 +132,16 @@ router.get('/:file', async (req, res) => {
     if (await user.checkAuthorisedUser(req.session.user_id) && req.params.file !== 'auth')
         req.session.file = req.params.file;
     res.redirect('/');
+})
+
+router.get('/findPerson/:id', async (req, res) => {
+    let response = await findPerson(req.params.id);
+    await res.json(response);
+})
+
+router.get('/getPerson/:id', async (req, res) => {
+    let response = await getPersonInfo(req.params.id);
+    await res.json(response);
 })
 
 router.get('/', async (req, res) => {

@@ -748,6 +748,15 @@ body::-webkit-scrollbar,
     transform: scale(1.07);
 }
 
+#searchHover img{
+    border: 1px solid rgba(217, 238, 255, 0.9);
+    transform: scale(1.07);
+}
+
+#searchHover span {
+    color: rgba(217, 238, 255, 0.9);
+}
+
 #info-block{
     position:fixed;
     display: none;
@@ -882,7 +891,7 @@ body::-webkit-scrollbar,
 }
 
 #trailer{
-    margin-left: 1.5vh;
+    margin-left: 1vh;
 }
 
 .small-button, #add-myList{
@@ -895,7 +904,7 @@ body::-webkit-scrollbar,
     fill: white;
     transition: all .3s ease-in-out;
     cursor: pointer;
-    margin-right: 1vh;
+    margin-right: .5vh;
 }
 
 #hls-play{
@@ -905,6 +914,23 @@ body::-webkit-scrollbar,
 .small-button:hover, #add-myList:hover{
     color: #d9eeff;
     fill: #d9eeff;
+}
+
+.small-button:hover #notSeenSvg {
+    stroke: #d9eeff;
+}
+
+#notSeenSvg {
+    fill: none;
+    stroke: white;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 3;
+    transition: all .3s ease-in-out;
+}
+
+#seenSvg{
+    display: none;
 }
 
 .small-button svg, #add-myList svg{
@@ -946,10 +972,10 @@ body::-webkit-scrollbar,
 }
 
 #rating{
-    margin-left: 2vh;
+    color: white;
     border: 1px solid white;
     border-radius: 2px;
-    font-size: small;
+    font-size: large;
     padding: 1px 3px;
 }
 
@@ -1187,6 +1213,7 @@ body::-webkit-scrollbar,
     background: rgba(144, 197, 240, .8);
     display: inline-block;
     height: 100%;
+    transition: all 0.2s ease-in-out;
 }
 
 .seasons .epiOverview{

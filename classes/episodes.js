@@ -89,8 +89,7 @@ class Episode extends TvShow {
 
             } else if (((new Date(lastEpisode.updatedAt).getTime()) - (new Date(firstEpisode.updatedAt).getTime())) >= (7 * 24 * 60 * 60 * 1000)) {
                 let penUlt = lastSeason[1];
-                result = "new episode" + (((new Date(lastEpisode.updatedAt).getTime()) - (new Date(penUlt.updatedAt).getTime())) >= (7 * 24 * 60 * 60 * 1000)) ? "" : "s";
-
+                result = "new episode" + ((((new Date(lastEpisode.updatedAt).getTime()) - (new Date(penUlt.updatedAt).getTime())) >= (7 * 24 * 60 * 60 * 1000)) ? "" : "s");
             }
         } else if (episodes.length) {
             let date = new Date(new Date(episodes[episodes.length -1].updatedAt).getTime() + (7 * 24 * 60 * 60 * 1000));
@@ -154,7 +153,8 @@ class Show extends Episode {
         if (show) {
             return await show.getEpisodes({
                 raw: true,
-                attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('season_id')), 'season_id']]
+                attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('season_id')), 'season_id']],
+                order: [['season_id', 'ASC']]
             });
         } else {
             return {error: "No such show exists"};

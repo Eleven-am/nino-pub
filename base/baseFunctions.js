@@ -74,24 +74,11 @@ const sFetch = async (url, head) => {
     head = head || false;
     return await fetch(url)
         .then(response => {
-            return head === true || response.status > 207 ? head === true ? response.headers: {headers: response.headers} : response.json();
+            return head === true || response.status > 207 ? response.headers : response.json();
         }).catch(reason => {
             console.log(reason);
             return false;
         });
-}
-
-
-async function pFetch(url, data) {
-    return await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: data
-    }).then(response => response.json())
-        .then(data => {
-            return data;
-        })
-        .catch(reason => console.log(reason));
 }
 
 const sAxios = async (url, head) => {
@@ -163,14 +150,15 @@ Array.prototype.uniqueID = function (needle) {
  */
 Array.prototype.randomiseDB = function (length, id, type) {
     let array = [];
-    let temp = this.filter(item => item.tmdb_id !== id && item.type !== type);
-    length = length > temp.length ? temp.length : length;
-    for (let i = 0; i < length; i++) {
-        let int = Math.floor(Math.random() * temp.length);
-        while (array.some(file => file.tmdb_id === temp[int].tmdb_id))
-            int = Math.floor(Math.random() * temp.length);
+    length = length > this.length ? this.length : length;
+    if (this.length) {
+        for (let i = 0; i < length; i++) {
+            let int = Math.floor(Math.random() * this.length);
+            while (array.some(file => file.tmdb_id === this[int].tmdb_id) || this[int].tmdb_id === id || this[int].type === type)
+                int = Math.floor(Math.random() * this.length);
 
-        array.push(this[int]);
+            array.push(this[int]);
+        }
     }
 
     return array;
@@ -332,6 +320,5 @@ module.exports = {
     toBytes,
     formatBytes,
     getLogger,
-    pFetch,
     aJax
 };

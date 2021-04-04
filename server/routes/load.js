@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
 const SpringBoard = require('../../classes/springBoard')
-const {sFetch} = require('../../base/baseFunctions')
 const {loadImages} = require('../../classes/auths')
 const {Editor} = require('../../classes/lists')
 let structure = require('../../config/structure.json')
@@ -55,15 +54,13 @@ router.get('/:type', async (req, res) => {
         else if (req.params.type === "tv")
             response.data = await spring.getLibrary(false, false);
 
-        /*else if (req.params.type === "maix")
-            response.data = await sFetch('https://nino-homebase.herokuapp.com/maix/maix');*/
-
         else {
             response.data = await spring.getList(req.params.type);
-            response.category = response.category === 'display' || response.data.hasOwnProperty('error')? response.data.hasOwnProperty('error')?  response.data.error : response.data[0].display : response.category;
+            response.category = response.category === 'display' ? response.data[0].display : response.category;
         }
 
-    } await res.json(response);
+    }
+    await res.json(response);
     if (req.session.user_id && req.params.type === 'suggestion' && running[req.session.user_id] === undefined) {
         running[req.session.user_id] = true;
         let res = await spring.saveSuggestion(req.session.user_id);

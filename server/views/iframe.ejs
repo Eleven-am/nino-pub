@@ -49,7 +49,6 @@
     </div>
 </div>
 
-
 <!-- Video block -->
 <div id="video-block">
     <div class="video-container">
@@ -75,6 +74,14 @@
                     <div id="volume-fill"></div>
                     <div id="volume-head"></div>
                 </div>
+                <svg id="airPlay" viewBox="0 0 24 24">
+                    <path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path>
+                    <polygon points="12 15 17 21 7 21 12 15"></polygon>
+                </svg>
+                <svg id="castButton" viewBox="0 0 24 24">
+                    <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path>
+                    <line x1="2" y1="20" x2="2.01" y2="20"></line>
+                </svg>
             </div>
 
             <div class="content-image"></div>
@@ -175,11 +182,11 @@
             <ul id="sub-list">
                 <li id="nan">None</li>
                 <div class="sub-divider"></div>
-                <li id="eng" data-id="en" style="display: none" class="subs">English</li>
+                <li id="eng" data-id="en" class="subs">English</li>
                 <div class="sub-divider"></div>
-                <li id="fre" data-id="fr" style="display: none" class="subs">French</li>
+                <li id="fre" data-id="fr" class="subs">French</li>
                 <div class="sub-divider"></div>
-                <li id="ger" data-id="de" style="display: none" class="subs">German</li>
+                <li id="ger" data-id="de" class="subs">German</li>
             </ul>
         </div>
 
@@ -191,5 +198,6 @@
 <!-- The Javascript dependencies -->
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" src="scripts/cast.js"></script>
 <script type="text/javascript" src="scripts/iframe.js"></script>
 </html>

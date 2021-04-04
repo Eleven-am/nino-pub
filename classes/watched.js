@@ -1,12 +1,14 @@
 const {db, type, insert, Op} = require('../base/sqlize')
 const Show = require('./episodes')
 const Movie = require('./movies')
+const Drive = require("./driveHandler");
 const {User} = require('./auths')
 const {getDetails, getEpisodeInfo, trending, pageTwo} = require("../base/tmdb-hook");
 const {log: ln, create_UUID} = require("../base/baseFunctions")
 const log = (line, info) => ln(line, 'watched', info)
 
 const usr = new User();
+const drive = new Drive();
 const Entry = db.define('watch', {
     watched_id: {
         type: type.BIGINT(20),
@@ -195,13 +197,13 @@ class Watched {
                         order: db.literal('RAND()')
                     });
 
-                    episodes = episodes.map( episode => {
+                    episodes = episodes.map(episode => {
                         episode.user_id = user_id;
                         episode.tmdb_id = show.get('tmdb_id');
                         return episode;
                     })
 
-                    if (episodes.length){
+                    if (episodes.length) {
                         let episode = episodes[0];
                         let showClass = new Show('00');
                         let temp = await showClass.playEpisode(episode.episode_id);
@@ -210,11 +212,14 @@ class Watched {
                     }
 
                     await Shuffle.destroy({where: {user_id}});
-                    await Shuffle.bulkCreate(episodes.map(item => {delete item.id; return item;}));
+                    await Shuffle.bulkCreate(episodes.map(item => {
+                        delete item.id;
+                        return item;
+                    }));
 
                 } else {
                     let episodes = await Shuffle.findAll({where: {user_id}, raw: true});
-                    if (episodes[0].episode_id === parseInt(info_id)){
+                    if (episodes[0].episode_id === parseInt(info_id)) {
                         let episode = episodes[0];
                         let showClass = new Show('00');
                         let temp = await showClass.playEpisode(episode.episode_id);
@@ -286,8 +291,8 @@ class Watched {
                         found: true
                     };
 
-                else {
-                    let moreEpisodes = await show.getEpisodes({where: {episode_id: {[Op.gt]: lastSeenEpisode.episode_id}}});
+                else if (lastSeenEpisode.finished !== 2) {
+                    let moreEpisodes = await show.getEpisodes({where: {episode_id: {[Op.gt]: lastSeenEpisode.episode_id}}, order: [['episode_id', 'ASC']]});
                     if (moreEpisodes.length) {
                         lastSeenEpisode = moreEpisodes[0].get();
                         result = {
@@ -296,12 +301,25 @@ class Watched {
                             found: true
                         };
                     }
+
+                } else {
+                    let notSeen = [];
+                    let moreEpisodes = await show.getEpisodes({raw: true, order: [['episode_id', 'ASC']]});
+                    for (let episode of moreEpisodes)
+                        if (!watchedEpisodes.some(item => item.episode_id === episode.episode_id))
+                            notSeen.push(episode);
+
+                    if (notSeen.length)
+                        result = {
+                            episode_id: notSeen[0].episode_id,
+                            position: 0,
+                            found: true
+                        };
                 }
             }
 
             if (result === false && find) {
                 let pilot = await show.getEpisodes({order: [['episode_id', 'ASC']]});
-                await Entry.update({finished: 1}, {where: {show_id: show.get('id'), position: {[Op.gt]: 919}, user_id}});
 
                 if (pilot.length)
                     result = {
@@ -319,10 +337,10 @@ class Watched {
      * @desc provides nino player with the next video on cue to be played
      * @param user_id
      * @param info_id
-     * @returns {Promise<{error: string}>}
+     * @returns {Promise<{play: string, overview, backdrop, name}>}
      */
     async getUpNext(user_id, info_id) {
-        let result = {error: "could not find a suitable suggestion"}
+        let result;
         info_id = `${info_id}`;
         let check = info_id.length > 8;
         if (check) {
@@ -332,7 +350,7 @@ class Watched {
         } else if (info_id.charAt(0) === "x") {
             info_id = info_id.replace('x', '');
             let episodes = await Shuffle.findAll({where: {user_id}, raw: true});
-            if (episodes[0].episode_id === parseInt(info_id) && episodes.length > 1){
+            if (episodes[0].episode_id === parseInt(info_id) && episodes.length > 1) {
                 let show = new Show('00');
                 let {name, overview, poster} = await show.getEpisode(episodes[1].episode_id);
                 result = {name, overview, play: 'x' + episodes[1].episode_id, backdrop: poster};
@@ -347,11 +365,9 @@ class Watched {
                 let show = await showClass.getRecommendations(true);
                 show = show.recommendations.randomiseDB(1, 1, 1);
 
-                if (show.length){
-                    show = await this.getNextEpisode(user_id, show[0].tmdb_id);
-                    let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
-                    result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
-                }
+                show = await this.getNextEpisode(user_id, show[0].tmdb_id);
+                let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
+                result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
             }
 
         } else {
@@ -372,11 +388,9 @@ class Watched {
                 let show = await showClass.getRecommendations(true);
                 show = show.recommendations.randomiseDB(1, 1, 1);
 
-                if (show.length){
-                    show = await this.getNextEpisode(user_id, show[0].tmdb_id);
-                    let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
-                    result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
-                }
+                show = await this.getNextEpisode(user_id, show[0].tmdb_id);
+                let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
+                result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
             }
         }
 
@@ -406,7 +420,7 @@ class Watched {
                 attributes: ['name', 'tmdb_id', 'logo', 'backdrop']
             }]
         });
-        let data = shows.uniqueID('show_id').concat(movies).sortKey('updatedAt', false).slice(0, 10);
+        let data = shows.uniqueID('show_id').concat(movies).sortKey('updatedAt', false).slice(0, 15);
         let response = [];
         for (let item of data) {
             if (item.hasOwnProperty('movie_id')) {
@@ -429,7 +443,7 @@ class Watched {
                     obj = obj.get();
                     obj.tmdb_id = item['show.tmdb_id'];
                     let {poster, overview} = await getEpisodeInfo(obj, true);
-                    poster = poster === undefined ? item['show.backdrop']: poster;
+                    poster = poster === undefined ? item['show.backdrop'] : poster;
                     item = {
                         backdrop: poster,
                         logo: item['show.logo'],
@@ -489,7 +503,7 @@ class Watched {
         let end = forDownload ? 5 : 1;
 
         for (let item of rating) {
-            item.rate = item.rate > 5 || item.rate === 5 ? item.rate > 5 ? item.rate: 1 : (item.rate - 10);
+            item.rate = item.rate > 5 || item.rate === 5 ? item.rate > 5 ? item.rate : 1 : (item.rate - 10);
             if (item.type === 1) {
                 let temp = await pageTwo(1, item.tmdb_id, [], 1, end, true);
                 response = response.expand(temp, item.rate * 2);
@@ -553,11 +567,17 @@ class Views extends Watched {
     /**
      * @desc returns the location to the auth provided, useful for playback
      * @param auth
-     * @returns {Promise<{user_id: unknown, location: unknown, type: unknown}|{error: string}>}
+     * @returns {Promise<{mimeType: unknown, user_id: unknown, location: unknown, type: unknown}|{error: string}>}
      */
     async getLocation(auth) {
+        let mime = undefined;
         let result = await ViewsDb.findOne({where: {auth}});
+        if (result) {
+            mime = await drive.getFile(result.location);
+            mime = mime.mimeType;
+        }
         return result ? {
+            mimeType: mime,
             location: result.get('location'),
             type: result.get('type'),
             user_id: result.get('user_id')
@@ -613,7 +633,7 @@ class Views extends Watched {
         if (result) {
             let type = result.get('type');
             response = type ? await db.models.movie.findOne({where: {gid: result.get('location')}}) : await db.models.episode.findOne({where: {gid: result.get('location')}});
-            response = type ? 'm' + response.get('tmdb_id') : 'e' + response.get('episode_id');
+            response = response && type ? 'm' + response.get('tmdb_id') : 'e' + response.get('episode_id');
         }
 
         return response;
@@ -767,7 +787,7 @@ class Views extends Watched {
                     obj = obj.get();
                     obj.tmdb_id = tmdb_id;
                     let {poster, overview} = await getEpisodeInfo(obj, true);
-                    poster = poster === undefined ? backdrop: poster;
+                    poster = poster === undefined ? backdrop : poster;
                     result = {backdrop: poster, logo, type, name, overview, tmdb_id, position: episode.position};
                 } else result = {done: 's' + tmdb_id};
 
@@ -804,6 +824,78 @@ class Views extends Watched {
             }
 
         }
+        return result;
+    }
+
+    /**
+     * @desc marks every item for the corresponding show or movie as seen
+     * @param user_id
+     * @param info_id
+     * @returns {Promise<any | {error: string}>}
+     */
+    async markAsSeen(user_id, info_id) {
+        let result = {error: 'no such entry exists on database'};
+        let user = await usr.findUser({user_id});
+        if (!user.hasOwnProperty('error')) {
+            let type = info_id.charAt(0) === 'm';
+            info_id = info_id.replace(/[ms]/, '');
+            let model = type ? db.models.movie : db.models.show;
+            let entry = await model.findOne({where: {tmdb_id: info_id}});
+            if (entry && type) {
+                let obj = {
+                    user_id,
+                    type: true,
+                    auth: create_UUID(),
+                    location: entry.gid,
+                    movie_id: entry.movie_id
+                }
+
+                await this.setView(obj)
+                let position = Math.floor(Math.random() * (1000 - 920 + 1)) + 920;
+                await this.informDB(user_id, position, obj.auth);
+                result = true;
+
+            } else {
+                let show = await db.models.show.findOne({where: {tmdb_id: info_id}});
+                if (show) {
+                    let episodes = await show.getEpisodes({
+                        raw: true,
+                        attributes: ['episode_id', 'gid'],
+                        order: [['episode_id', 'ASC']]
+                    });
+
+                    episodes = episodes.map(episode => {
+                        return {
+                            user_id,
+                            type: false,
+                            auth: create_UUID(),
+                            location: episode.gid,
+                            episode_id: episode.episode_id
+                        }
+                    });
+
+                    await ViewsDb.bulkCreate(episodes);
+                    episodes = episodes.map(item => {
+                        return {
+                            user_id,
+                            finished: 2,
+                            type: false,
+                            episode_id: item.episode_id,
+                            auth: item.auth,
+                            show_id: show.id,
+                            watched_id: '' + user.id + item.episode_id,
+                            position: Math.floor(Math.random() * (1000 - 920 + 1)) + 920,
+                        }
+                    })
+
+                    await Entry.destroy({where: {user_id, show_id: show.id}});
+                    await Entry.bulkCreate(episodes);
+                    result = true;
+                }
+            }
+        } else
+            result = user;
+
         return result;
     }
 }

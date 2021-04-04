@@ -99,10 +99,7 @@ $(document).on("click", ".searchRes", function (e) {
 submit.onclick = async () => {
     let name = document.getElementById("name").value;
     let display = document.getElementById("info-name").value;
-    let selected = [{index: 0, name: select_one.value}, {index: 1, name: select_two.value}];
     if (name === "" && document.querySelectorAll('.remove').length) alert("Please enter a category");
-    if (display === "" && document.querySelectorAll('.remove').length) alert("Please enter display info");
-    if ((select_one.value === select_two.value) && (select_two.value !== '')) alert('both editor picks cannot have the same value');
     else {
         let blob = [];
         document.querySelectorAll('.remove').forEach(div => {
@@ -110,6 +107,7 @@ submit.onclick = async () => {
         })
 
         info = [];
+        let selected = [{index: 0, name: select_one.value}, {index: 1, name: select_two.value}];
         let data = {name, display, blob, selected};
 
         data = JSON.stringify(data);

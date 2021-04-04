@@ -1,12 +1,4 @@
-let google_token;
-let tmdb_api;
-let database;
-let library;
-let homeBase;
-let cypher;
-let openSubtitles;
-let admin_mail;
-let admin_pass;
+let google_token, tmdb_api, deluge, database, library, homeBase, cypher, openSubtitles, admin_mail, admin_pass;
 
 document.getElementById("logo").setAttribute("class", "growOut");
 
@@ -89,10 +81,9 @@ const login = () => {
                     admin_mail = obj.username;
                     admin_pass = obj.password;
                     loadSQL();
-                }
-                else {
+                } else {
                     response.data.cypher = response.cypher
-                    if (response.data.openSubtitles)
+                    if (response.data.openSubtitles && response.data.deluge)
                         await download(response.data)
                     else {
                         delete response.action;
@@ -133,7 +124,7 @@ const login = () => {
             let username = document.getElementById("log-username");
             let password = document.getElementById("log-password");
 
-            if (validateEmail(username.value)){
+            if (validateEmail(username.value)) {
                 if (type === "login") {
                     const obj = {
                         username: username.value,
@@ -295,7 +286,7 @@ const loadTMDB = () => {
                 setTimeout(() => {
                     let check = confirm('would you like to set up open subtitles');
                     if (check)
-                       loadOpenSubs();
+                        loadOpenSubs();
                     else
                         loginGoogle('homeBase');
                 }, 1000)
@@ -304,7 +295,7 @@ const loadTMDB = () => {
     }, 1000)
 }
 
-const loadOpenSubs = done => {
+const loadOpenSubs = (done, deluge) => {
     done = done || false
     document.getElementById("login-container").innerHTML = '';
     document.getElementById("login-container").style.opacity = "0";
@@ -362,6 +353,85 @@ const loadOpenSubs = done => {
                 document.getElementById("loader").style.zIndex = "999";
                 openSubtitles = {username, password, useragent};
                 setTimeout(async () => {
+                    if (deluge === null || deluge === undefined) {
+                        let check = confirm('would you like to setup automatic download?, requires an active deluge web server.')
+                        if (check)
+                            loadDeluge(done)
+
+                    } else {
+                        if (done === false)
+                            await loginGoogle('homeBase');
+                        else {
+                            done.data.openSubtitles = openSubtitles;
+                            await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify(done))
+                            await download(done.data);
+                        }
+                    }
+                }, 1000)
+            }
+        }
+    }, 1000)
+}
+
+const loadDeluge = done => {
+    done = done || false
+    document.getElementById("login-container").innerHTML = '';
+    document.getElementById("login-container").style.opacity = "0";
+    document.getElementById("loader").style.opacity = "1";
+    document.getElementById("loader").style.zIndex = "999";
+
+    setTimeout(() => {
+        document.getElementById("login-container").innerHTML = `
+                <div id="login-info">
+                    <span id="del-info">Please enter your deluge server domain name details to configure nino</span>
+                    <br>
+                    <span>If you don't have an active deluge server consider visiting <span id="deluge-site" class="hyperlink">their site</span> to learn how to set up one</span>
+                </div>
+                <div id="login-holder">
+                    <ul id="login-list">
+                        <li>hostname</li>
+                        <li>download location</li>
+                        <li>password</li>
+                    </ul>
+                    <div id="login-form">
+                        <form id="os-form">
+                            <input type="text" name="os-Useragent" id="deluge-host" placeholder="deluge.example.com">
+                            <input type="text"  name="os-Username" id="deluge-folder" placeholder="/path/to/download-folder">
+                            <input type="password"  name="os-Password" id="deluge-password" placeholder="Password">
+                            <button id="deluge" class="log-submit" type="button" data-id="deluge">Submit</button>
+                        </form>
+                    </div>
+                </div>`;
+
+        document.getElementById("login-container").style.opacity = "1";
+        document.getElementById("loader").style.opacity = "0";
+        document.getElementById("loader").style.zIndex = "-999";
+
+        document.getElementById("deluge-site").onclick = () => {
+            let win = window.open('https://deluge-torrent.org', '_blank');
+            win.focus();
+        }
+
+        document.getElementById("deluge").onclick = () => {
+            let deluge_url, directory, password;
+            deluge_url = document.getElementById("deluge-host").value;
+            directory = document.getElementById("deluge-folder").value;
+            password = document.getElementById('deluge-password').value;
+
+            if (deluge_url === '' || directory === '' || password === '') {
+                document.getElementById("del-info").innerText = 'Please enter valid deluge credentials to continue';
+                document.getElementById("del-info").style.color = 'rgba(245, 78, 78, .9)';
+                document.getElementById("deluge-host").style.borderColor = 'rgba(245, 78, 78, .9)';
+                document.getElementById("deluge-folder").style.borderColor = 'rgba(245, 78, 78, .9)';
+                document.getElementById("deluge-password").style.borderColor = 'rgba(245, 78, 78, .9)';
+            } else {
+                document.getElementById("login-container").innerHTML = '';
+                document.getElementById("login-container").style.opacity = "0";
+                document.getElementById("loader").style.opacity = "1";
+                document.getElementById("loader").style.zIndex = "999";
+                deluge = {directory, password, deluge_url: deluge_url.replace(/\/$/, '') + '/json'};
+
+                setTimeout(async () => {
                     if (done === false)
                         await loginGoogle('homeBase');
                     else {
@@ -372,6 +442,7 @@ const loadOpenSubs = done => {
                 }, 1000)
             }
         }
+
     }, 1000)
 }
 
@@ -417,7 +488,7 @@ const loginGoogle = async string => {
             document.getElementById("login-container").style.opacity = "0";
             document.getElementById("loader").style.opacity = "1";
             document.getElementById("loader").style.zIndex = "999";
-            if (string === 'getToken'){
+            if (string === 'getToken') {
                 google_token = token;
                 setTimeout(() => buildFolders(), 1000)
             } else {
@@ -488,14 +559,22 @@ const confirmFolders = async () => {
     document.getElementById("loader").style.zIndex = "999";
     let info = await pFetch('setup/confirmFolders', JSON.stringify(library));
     if (info) {
-        let json = {database, library, tmdb_api, google_token, admin_mail, admin_pass,
-            cypher, logger: true, openSubtitles: openSubtitles === undefined ? null : openSubtitles,
+        let json = {
+            database, library, tmdb_api, google_token, admin_mail, admin_pass,
+            cypher, logger: true, openSubtitles: openSubtitles ? openSubtitles : null,
+            deluge: deluge ? deluge : null,
             fanArt: {
-            "apiKey": "84a65dfbe1b2441c7d2fe3f54c681cab",
-            "base": "http://webservice.fanart.tv/v3/"
-        }}
+                "apiKey": "84a65dfbe1b2441c7d2fe3f54c681cab",
+                "base": "http://webservice.fanart.tv/v3/"
+            }
+        }
 
-        let check = await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({username: admin_mail, cypher, data: json, homeBase}))
+        let check = await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({
+            username: admin_mail,
+            cypher,
+            data: json,
+            homeBase
+        }))
         if (check)
             await download(json)
     } else getFolders()

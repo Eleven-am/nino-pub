@@ -6,7 +6,8 @@ const SpringBoard = require('../../classes/springBoard')
 const got = require('got')
 
 router.get('/drive/:id', async (req, res) => {
-    got.stream(`https://drive.google.com/uc?export=view&id=${req.params.id}`).pipe(res);
+    got.stream(`https://drive.google.com/uc?export=view&id=${req.params.id}`).pipe(res)
+        .catch(error => console.log(error));
 })
 
 router.get('/:location/:info_id', async (req, res) => {
@@ -26,11 +27,11 @@ router.get('/:location/:info_id', async (req, res) => {
         info = info.poster.replace('images/drive/', 'https://drive.google.com/uc?export=view&id=');
 
         if (req.params.location === 'auth')
-            got.stream(info).pipe(res);
+            got.stream(info).pipe(res).catch(error => console.log(error));
 
         else {
             let transformer = sharp().resize({height});
-            got.stream(info).pipe(transformer).pipe(res);
+            got.stream(info).pipe(transformer).pipe(res).catch(error => console.log(error));;
         }
 
     } else
@@ -40,7 +41,8 @@ router.get('/:location/:info_id', async (req, res) => {
 router.get('/meta', async (req, res) => {
     let response = await getMetaImages();
     if (!response.hasOwnProperty('error'))
-        got.stream(`https://drive.google.com/uc?export=view&id=${response.gid}`).pipe(res);
+        got.stream(`https://drive.google.com/uc?export=view&id=${response.gid}`).pipe(res)
+            .catch(error => console.log(error));
     else
         res.status(400).json(response.error);
 })

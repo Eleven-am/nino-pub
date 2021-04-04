@@ -141,5 +141,4 @@ const init = async logger => {
     return info === '' ? true : {file, info};
 }
 
-
 module.exports = init;

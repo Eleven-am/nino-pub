@@ -67,10 +67,18 @@ body {
     cursor: pointer;
 }
 
-#result li img {
+.image {
     width: 160px;
     height: 90px;
     margin: 10px;
+}
+
+.face {
+    all: initial;
+    width: 90px;
+    height: 160px;
+    margin: 5px;
+    object-fit: contain;
 }
 
 #manual {

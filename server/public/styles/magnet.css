@@ -1,0 +1,96 @@
+body {
+    background: #2b3940;
+    color: white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+#span-div {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+#span-div span {
+    border: 2px solid white;
+    cursor: pointer;
+    padding: 4px;
+    width: 40%;
+}
+
+#span-div span:hover {
+    color: #d9eeff;
+    border-color: #d9eeff;
+}
+
+.title {
+    width: 100%;
+    text-align: center;
+    background: #2b3940;
+    padding: 20px;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+}
+
+.title button {
+    font-size: x-large;
+    padding: 0 10px;
+    background: #2b3940;
+    border: 2px solid seashell;
+    color: seashell;
+    cursor: pointer;
+}
+
+.title button:hover {
+    color: #d9eeff;
+    border: 2px solid #d9eeff;
+}
+
+ul {
+    padding: 0;
+    margin: 0;
+}
+
+#display-output {
+    width: 100%;
+    padding: 10px 10px;
+}
+
+.output-grid img {
+    width: 240px;
+    height: auto;
+    border: 2px solid rgba(0, 0, 0, 0);
+    border-radius: 10px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.output-grid {
+    display: flex;
+    justify-content: flex-start;
+    list-style: none;
+    padding: 0;
+}
+
+.added img {
+    border: 2px solid lightgreen;
+}
+
+.failed img {
+    border: 2px solid coral;
+}
+
+.added:hover img {
+    border: 2px solid aquamarine;
+}
+
+.failed:hover img {
+    border: 2px solid lightcoral;
+}
+
+.remove:hover img {
+    border: 2px solid #d9eeff;
+}

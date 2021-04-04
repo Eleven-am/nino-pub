@@ -60,6 +60,7 @@ class DriveHandler {
      */
     buildRange = (range, video) => {
         const videoRes = {};
+        videoRes.mimeType = video.mimeType;
         videoRes.fileSize = parseInt(video.size, 10);
         const parts = range
             .replace(/bytes=/, "")
@@ -78,10 +79,13 @@ class DriveHandler {
      * @returns {Promise<drive_v2.Schema$File>}
      */
     getFile = async fileId => {
-        return (await drive.files.get({
-            fileId: fileId,
-            fields: "id, name, size, mimeType, contentHints/thumbnail, videoMediaMetadata, thumbnailLink, explicitlyTrashed"
-        })).data;
+        return new Promise(resolve => {
+            drive.files.get({
+                fileId: fileId,
+                fields: "id, name, size, mimeType, contentHints/thumbnail, videoMediaMetadata, thumbnailLink, explicitlyTrashed"
+            }).then(response => resolve(response.data))
+                .catch(error => resolve({error: error.message}))
+        })
     }
 
     /**
@@ -102,12 +106,12 @@ class DriveHandler {
      */
     streamFile = async (id, dest, range) => {
         const file = await this.getFile(id);
-        const {start, end, chunkSize, fileSize} = this.buildRange(range, file);
+        const {start, end, chunkSize, fileSize, mimeType} = this.buildRange(range, file);
         dest.writeHead(206, {
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
             'Accept-Ranges': 'bytes',
             'Content-Length': chunkSize,
-            'Content-Type': 'video/mp4'
+            'Content-Type': mimeType
         })
 
         let {data} = await drive.files.get({
@@ -152,7 +156,7 @@ class DriveHandler {
      */
     rawDownload = async (file_id, name, dest, mime) => {
         let {mimeType} = await this.getFile(file_id);
-        let value = mime ? 'inline' : 'attachment; filename=' + name + ' [nino].mp4'
+        let value = mime ? 'inline' : 'attachment; filename=' + name + ' [nino].mp4';
         mime = mime || mimeType;
 
         let {data} = await drive.files.get({
@@ -220,5 +224,17 @@ class DriveHandler {
         console.log('Used quota (bytes): ' + resp.quotaBytesUsed);
     }
 }
+
+/*const test = async () => {
+    let episodes = '1odXGcUAY4sKP-JywHy-YDQGE7SHFtsAD';
+    let u = new DriveHandler()
+    let files = await u.readFolder(episodes);
+
+    for (let i = 0; i < files.length; i++){
+        let name = 'S03E' + (i+1 > 9 ? "": "0") + (i+1) + ".mp4";
+        await u.renameFile(files[i].id, name);
+    }
+}
+test()*/
 
 module.exports = DriveHandler;
