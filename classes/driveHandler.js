@@ -225,16 +225,4 @@ class DriveHandler {
     }
 }
 
-/*const test = async () => {
-    let episodes = '1odXGcUAY4sKP-JywHy-YDQGE7SHFtsAD';
-    let u = new DriveHandler()
-    let files = await u.readFolder(episodes);
-
-    for (let i = 0; i < files.length; i++){
-        let name = 'S03E' + (i+1 > 9 ? "": "0") + (i+1) + ".mp4";
-        await u.renameFile(files[i].id, name);
-    }
-}
-test()*/
-
 module.exports = DriveHandler;

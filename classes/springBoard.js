@@ -9,7 +9,8 @@ const {getDetails, trending, loadPortrait} = require("../base/tmdb-hook");
 const {db, insert, queryDB} = require('../base/sqlize')
 const {User} = require("../classes/auths");
 const user = new User();
-await user.createAdmin();
+user.createAdmin()
+    .catch(error => console.log(error))
 
 class SpringBoard extends Views {
     /**

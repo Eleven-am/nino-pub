@@ -408,7 +408,7 @@ class Editor {
     async getPick(number) {
         let info = await Picks.findAll({raw: true});
         info = info.find(item => item.index === parseInt(`${number}`));
-        return info === undefined ? false : info.name;
+        return info === undefined ? 'editor'+number : info.name;
     }
 
     /**
@@ -431,8 +431,9 @@ class Editor {
      * @returns {Promise<void>}
      */
     async setPick(selected) {
+        let temp = selected.filter(item => item.name !== '')
         await Picks.destroy({where: {id: {[Op.gt]: 0}}});
-        await Picks.bulkCreate(selected);
+        await Picks.bulkCreate(temp);
     }
 }
 
