@@ -227,6 +227,27 @@ class DriveHandler {
         console.log('Total quota (bytes): ' + resp.quotaBytesTotal);
         console.log('Used quota (bytes): ' + resp.quotaBytesUsed);
     }
+
+    /**
+     * @dest a beta stream function that handles HLS adaptive streaming
+     * @param filename
+     * @param folder
+     * @param dest
+     * @returns {Promise<void>}
+     */
+    hlsStream = async (filename, folder, dest) => {
+        let file = await this.findFile(filename, folder);
+        if (file) {
+            let {id, mimeType} = file;
+            let { data } = await drive.files.get({
+                fileId: id,
+                alt: 'media'
+            }, {responseType: 'stream'});
+
+            dest.setHeader('Content-type', mimeType);
+            data.pipe(dest);
+        }
+    }
 }
 
 module.exports = DriveHandler;
