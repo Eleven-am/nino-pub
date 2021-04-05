@@ -4,15 +4,14 @@ const {sAxios, log, formatBytes, toBytes} = require("../base/baseFunctions")
 const {getExternalId, getSeasonInfo, getDetails} = require("../base/tmdb-hook")
 const {db, type, insert} = require('../base/sqlize')
 const {deluge} = require('../config/nino.json')
-let delugeHandler, folder = null;
+let delugeHandler = null;
 const Torrent = require('torrent-search-api')
 const DriveHandler = require("./driveHandler");
 const providers = Torrent.getProviders()
 
 if (require('../config/nino.json').deluge !== null) {
     const {deluge_url, directory, password} = require('../config/nino.json').deluge;
-    folder = directory;
-    delugeHandler = require('../base/deluge')(deluge_url, password);
+    delugeHandler = require('../base/deluge')(deluge_url, password, directory);
 }
 
 for (let provider of providers)
@@ -192,7 +191,7 @@ class Magnet {
      */
     async downloadTorrent(magnet) {
         if (deluge !== null){
-            await delugeHandler.add(magnet, folder, (error, result) => {
+            await delugeHandler.add(magnet, (error, result) => {
                 if (error)
                     return {error};
                 else

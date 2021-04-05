@@ -12,13 +12,15 @@
 
     let PASSWORD,
         DELUGE_URL,
+        DOWNLOAD_PATH,
         SESSION_COOKIE = '',
         COOKIE_JAR = {};
 
-    module.exports = function (deluge_url, password) {
+    module.exports = function (deluge_url, password, directory) {
         if (deluge_url && password && deluge_url !== '' && password !== ''){
             DELUGE_URL = deluge_url;
             PASSWORD = password;
+            DOWNLOAD_PATH = directory;
             return {
                 /**
                  * Add the torrent to Deluge
@@ -26,9 +28,9 @@
                  * @param dlPath
                  * @param callback
                  */
-                add: function (magnet, dlPath, callback) {
+                add: function (magnet, callback) {
                     executeApiCall(function () {
-                        add(magnet, dlPath, callback);
+                        add(magnet, DOWNLOAD_PATH, callback);
                     })
                 },
                 /**

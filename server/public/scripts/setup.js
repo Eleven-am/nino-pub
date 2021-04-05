@@ -82,10 +82,16 @@ const login = () => {
                     admin_pass = obj.password;
                     loadSQL();
                 } else {
-                    response.data.cypher = response.cypher
+                    response.data.cypher = response.cypher;
                     if (response.data.openSubtitles && response.data.deluge)
-                        await download(response.data)
-                    else {
+                        await download(response.data);
+
+                    else if (response.data.openSubtitles && !response.data.deluge) {
+                        let check = confirm('would you like to setup automatic download?, requires an active deluge web server.')
+                        if (check)
+                            loadDeluge(response)
+
+                    } else {
                         delete response.action;
                         response.username = response.data.admin_mail;
                         let check = confirm('would you like to set up open subtitles');
@@ -435,7 +441,7 @@ const loadDeluge = done => {
                     if (done === false)
                         await loginGoogle('homeBase');
                     else {
-                        done.data.openSubtitles = openSubtitles;
+                        done.data.deluge = deluge;
                         await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify(done))
                         await download(done.data);
                     }

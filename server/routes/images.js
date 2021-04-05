@@ -7,7 +7,7 @@ const got = require('got')
 
 router.get('/drive/:id', async (req, res) => {
     got.stream(`https://drive.google.com/uc?export=view&id=${req.params.id}`).pipe(res)
-        .catch(error => console.log(error));
+        .on('error', e => console.log(e));
 })
 
 router.get('/:location/:info_id', async (req, res) => {
@@ -27,11 +27,11 @@ router.get('/:location/:info_id', async (req, res) => {
         info = info.poster.replace('images/drive/', 'https://drive.google.com/uc?export=view&id=');
 
         if (req.params.location === 'auth')
-            got.stream(info).pipe(res).catch(error => console.log(error));
+            got.stream(info).pipe(res).on('error', e => console.log(e));
 
         else {
             let transformer = sharp().resize({height});
-            got.stream(info).pipe(transformer).pipe(res).catch(error => console.log(error));;
+            got.stream(info).pipe(transformer).pipe(res).on('error', e => console.log(e));;
         }
 
     } else
@@ -42,7 +42,7 @@ router.get('/meta', async (req, res) => {
     let response = await getMetaImages();
     if (!response.hasOwnProperty('error'))
         got.stream(`https://drive.google.com/uc?export=view&id=${response.gid}`).pipe(res)
-            .catch(error => console.log(error));
+            .on('error', e => console.log(e));
     else
         res.status(400).json(response.error);
 })
