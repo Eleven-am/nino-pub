@@ -189,8 +189,7 @@ class Update extends Magnet {
                 }
             }
         } else
-            console.log(file)
-            //await drive.deleteFile(file.id)
+            await drive.deleteFile(file.id)
 
         return {check, previous}
     }

@@ -369,7 +369,6 @@ const loadOpenSubs = (done, deluge) => {
                             await loginGoogle('homeBase');
                         else {
                             done.data.openSubtitles = openSubtitles;
-                            await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify(done))
                             await download(done.data);
                         }
                     }
@@ -442,7 +441,6 @@ const loadDeluge = done => {
                         await loginGoogle('homeBase');
                     else {
                         done.data.deluge = deluge;
-                        await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify(done))
                         await download(done.data);
                     }
                 }, 1000)
@@ -575,22 +573,26 @@ const confirmFolders = async () => {
             }
         }
 
-        let check = await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({
-            username: admin_mail,
-            cypher,
-            data: json,
-            homeBase
-        }))
-        if (check)
-            await download(json)
+        await download(json)
     } else getFolders()
 }
 
 const download = async json => {
+    let deleteAndRename;
     document.getElementById("login-container").innerHTML = '';
     document.getElementById("login-container").style.opacity = "0";
     document.getElementById("loader").style.opacity = "1";
     document.getElementById("loader").style.zIndex = "999";
+    if (!json.deleteAndRename) {
+        deleteAndRename = confirm('Would you like to allow nino delete(non media files: TXTs, SRTs, VTTs) or rename files on your google drive? This improves scan speed');
+        json.deleteAndRename = deleteAndRename;
+
+    } await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({
+        username: admin_mail,
+        cypher,
+        data: json,
+        homeBase
+    }))
     await pFetch('setup/config', JSON.stringify(json));
     setTimeout(() => {
         window.location.reload()

@@ -151,6 +151,7 @@ const ninoPlayer = {
         overview: document.getElementById("video-deets"),
         playFlash: document.getElementById("playFlash"),
         foncer: document.getElementById('foncer'),
+        castHolder: document.getElementById('castHolder'),
         pauseFlash: document.getElementById("pauseFlash")
     }, buttons: {
         play: {
@@ -176,6 +177,7 @@ const ninoPlayer = {
         countdown: document.getElementById("countDown"),
         title: document.getElementById("video-title"),
         timeLeft: document.getElementById("time-left"),
+        castName: document.getElementById('castDevice'),
         lower_title: document.getElementById("episodeName")
     }, sliders: {
         volumeFill: document.getElementById("volume-fill"),
@@ -486,8 +488,10 @@ const buildInfo = info => {
     infoBlock.position.style.width = "0%";
     infoBlock.box.scrollTop = 0;
     document.getElementById("divider").style.background = "rgba(255, 255, 255, .6)";
-
     let id = info.type === "movie" ? "m" + info.id : "s" + info.id;
+    if (myFrame.cjs && myFrame.cjs.connected)
+        myFrame.cjs.ping({action: 'displayInfo', name: info.name, backdrop: info.backdrop, logo: info.logo, overview: info.overview});
+
     infoBlock.hls.setAttribute("data-id", id);
     infoBlock.play.setAttribute("data-id", id);
     addToList.holder.setAttribute("data-id", id);
@@ -561,8 +565,6 @@ const buildInfo = info => {
     infoBlock.cast.innerHTML = info.cast.map(person => `
             <span class="person" data-id="${person.id}">${person.name}</span><br>
         `).join('');
-    if (myFrame.cjs && myFrame.cjs.connected)
-        myFrame.cjs.ping({action: 'displayInfo', name: info.name, backdrop: info.backdrop, logo: info.logo, overview: info.overview});
 
     handleOptions(info.section[0])
     loader.fade();
@@ -751,11 +753,11 @@ const loggedInLoader = async () => {
         primary.insertAdjacentHTML("afterbegin", string);
 
         let next = await getList();
-        loadCast();
-        loadAirplay();
         while (next !== false)
             next = next === "continue" ? await getCont() : await userFunc(next);
 
+        loadCast();
+        loadAirplay();
 
     } else window.location.reload();
 }

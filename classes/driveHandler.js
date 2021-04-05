@@ -1,6 +1,6 @@
 const {google} = require('googleapis')
 const credentials = require('../config/credentials.json')
-const {google_token} = require('../config/nino.json')
+const {google_token, deleteAndRename} = require('../config/nino.json')
 
 const {client_secret, client_id, redirect_uris} = credentials.installed;
 const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
@@ -94,7 +94,9 @@ class DriveHandler {
      * @returns {Promise<*>}
      */
     deleteFile = async fileId => {
-        return (await drive.files.update({fileId, requestBody: {trashed: true}})).status === 200;
+        if (deleteAndRename)
+            return (await drive.files.update({fileId, requestBody: {trashed: true}})).status === 200;
+        else return false;
     }
 
     /**
@@ -187,10 +189,12 @@ class DriveHandler {
      * @returns {Promise<*>}
      */
     renameFile = async (fileId, name) => {
-        return await drive.files.update({
-            'fileId': fileId,
-            'resource': {name}
-        })
+        if (deleteAndRename)
+            return await drive.files.update({
+                'fileId': fileId,
+                'resource': {name}
+            })
+        else return false;
     }
 
     /**

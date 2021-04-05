@@ -400,6 +400,45 @@
     transition: all .5s ease-in-out;
 }
 
+#castHolder {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(1, 16, 28, .7);
+    display: none;
+}
+
+#castHolder #holder {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    bottom: 4vh;
+    height: 7vw;
+    margin: 2vw;
+}
+
+#castHolder #holder svg{
+    stroke: rgba(144, 197, 240, .7);
+    fill: rgba(0,0,0,0);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    padding: 10px;
+    height: 60%;
+    width: auto;
+    cursor: pointer;
+}
+
+#castHolder #holder ul{
+    list-style: none;
+    margin: 0 10px 0 0;
+    font-family: "Cabin", sans-serif;
+    color: #d9eeff;
+    padding: 0;
+}
+
 #skip-recap {
     position: fixed;
     display: none;

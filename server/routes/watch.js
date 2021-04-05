@@ -31,7 +31,8 @@ router.get('/subs/:auth/:language', async (req, res) => {
         await res.status(400).json(response.error);
     else {
         res.setHeader("Content-Type", 'text/vtt');
-        got.stream(response).pipe(srt2vtt()).pipe(res);
+        got.stream(response).pipe(srt2vtt()).pipe(res)
+            .on('error', e => log(35, e));
     }
 })
 

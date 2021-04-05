@@ -466,7 +466,7 @@ const reach = async location => sFetch('update/' + location)
 window.onload = async () => {
     config = await sFetch('update/configuration');
     if (config.magnet)
-        hide.style.display = 'block';
+        hide.style.display = 'flex';
     else
         hide.style.display = 'none';
 

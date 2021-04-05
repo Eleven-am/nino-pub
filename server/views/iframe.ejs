@@ -55,6 +55,18 @@
         <video preload="metadata"></video>
         <img src="" id="previewFrame">
         <div id="foncer"></div>
+        <div id="castHolder">
+            <div id="holder">
+                <svg viewBox="0 0 24 24">
+                    <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path>
+                    <line x1="2" y1="20" x2="2.01" y2="20"></line>
+                </svg>
+                <ul>
+                    <li style="font-size: 20px">Currently casting media</li>
+                    <li style="font-size: small">to: <span id="castDevice"></span></li>
+                </ul>
+            </div>
+        </div>
         <div class="controls-container">
             <svg id="back-button" viewBox="0 0 512 512">
                 <path d="M256,0C114.844,0,0,114.844,0,256s114.844,256,256,256s256-114.844,256-256S397.156,0,256,0z M256,490.667

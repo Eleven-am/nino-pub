@@ -37,6 +37,7 @@ const ninoPlayer = {
         controls: document.querySelector('.video-container .controls-container'),
         overview: document.getElementById("video-deets"),
         playFlash: document.getElementById("playFlash"),
+        castHolder: document.getElementById('castHolder'),
         pauseFlash: document.getElementById("pauseFlash"),
         foncer: document.getElementById('foncer')
     }, buttons: {
@@ -53,6 +54,8 @@ const ninoPlayer = {
         rewind: document.querySelector('.video-container .controls button.rewind'),
         fastForward: document.querySelector('.video-container .controls button.fast-forward'),
         next: document.getElementById("nextButton"),
+        airPlay: document.getElementById('airPlay'),
+        cast: document.getElementById('castButton'),
         volume: document.getElementById("volume")
     }, infoTexts: {
         info: document.getElementById("video-info"),
@@ -61,6 +64,7 @@ const ninoPlayer = {
         countdown: document.getElementById("countDown"),
         title: document.getElementById("video-title"),
         timeLeft: document.getElementById("time-left"),
+        castName: document.getElementById('castDevice'),
         lower_title: document.getElementById("episodeName")
     }, sliders: {
         volumeFill: document.getElementById("volume-fill"),
@@ -95,27 +99,27 @@ Object.defineProperty(HTMLMediaElement.prototype, 'playing', {
 })
 
 const modifyPLayPause = () => {
-    if (!ninoPlayer.booleans.active) {
-        ninoPlayer.booleans.active = true;
-        ninoPlayer.uiBlocks.playFlash.removeAttribute('style');
-    }
-
     if (!ninoPlayer.video.paused) {
-        ninoPlayer.uiBlocks.playFlash.setAttribute("class", "flash");
-        setTimeout(() => {
-            ninoPlayer.uiBlocks.playFlash.removeAttribute("class");
-        }, 400);
+        if (!(myFrame.cjs && myFrame.cjs.connected)) {
+            ninoPlayer.uiBlocks.playFlash.setAttribute("class", "flash");
+            setTimeout(() => {
+                ninoPlayer.uiBlocks.playFlash.removeAttribute("class");
+            }, 400);
+        }
         ninoPlayer.buttons.play.pauseButton.removeAttribute("style");
         ninoPlayer.buttons.play.playButton.style.display = 'none';
         showInfo();
     } else {
-        ninoPlayer.uiBlocks.pauseFlash.setAttribute("class", "flash");
-        setTimeout(() => {
-            ninoPlayer.uiBlocks.pauseFlash.removeAttribute("class");
-        }, 400);
+        if (!(myFrame.cjs && myFrame.cjs.connected)) {
+            ninoPlayer.uiBlocks.pauseFlash.setAttribute("class", "flash");
+            setTimeout(() => {
+                ninoPlayer.uiBlocks.pauseFlash.removeAttribute("class");
+            }, 400);
+        }
         ninoPlayer.buttons.play.playButton.removeAttribute("style");
         ninoPlayer.buttons.play.pauseButton.style.display = 'none';
     }
+
 }
 
 const playPause = () => {
@@ -136,6 +140,52 @@ const muteUnmute = () => {
         myFrame.cjs.muteUnmute();
     else
         ninoPlayer.video.muted = !ninoPlayer.video.muted;
+}
+
+const displayControls = () => {
+    ninoPlayer.uiBlocks.controls.style.opacity = '1';
+    ninoPlayer.uiBlocks.holder.style.cursor = "auto";
+    ninoPlayer.video.style.cursor = "auto";
+    if (ninoPlayer.timers.controlsTimeout)
+        clearTimeout(ninoPlayer.timers.controlsTimeout);
+
+    ninoPlayer.timers.controlsTimeout = setTimeout(() => {
+        ninoPlayer.uiBlocks.controls.style.opacity = '0';
+        subtitles.block.style.opacity = "0";
+        subtitles.block.style.zIndex = "-999999";
+        subtitles.shown = false;
+        upNext.block.style.opacity = "0";
+        upNext.block.style.zIndex = "-999999";
+
+        if (ninoPlayer.booleans.active) {
+            ninoPlayer.uiBlocks.holder.style.cursor = "none";
+            ninoPlayer.video.style.cursor = "none";
+        }
+
+    }, 5000);
+    showInfo();
+}
+
+const showInfo = () => {
+    ninoPlayer.infoTexts.information.classList.remove("slideRight");
+    ninoPlayer.infoTexts.information.classList.add("slideLeft");
+
+    setTimeout(() => {
+        ninoPlayer.infoTexts.info.style.opacity = "0";
+        ninoPlayer.infoTexts.info.style.zIndex = "-999";
+    }, 200);
+
+    if (ninoPlayer.timers.infoTimeout)
+        clearTimeout(ninoPlayer.timers.infoTimeout);
+
+    ninoPlayer.timers.infoTimeout = setTimeout(() => {
+        if (ninoPlayer.video.paused) {
+            ninoPlayer.infoTexts.information.classList.remove("slideLeft");
+            ninoPlayer.infoTexts.info.style.zIndex = "999";
+            ninoPlayer.infoTexts.info.style.opacity = '1';
+            ninoPlayer.infoTexts.information.classList.add("slideRight");
+        }
+    }, 10000);
 }
 
 function playYoutubeVideo() {
@@ -182,6 +232,7 @@ const buildVideo = async (response, subs) => {
     ninoPlayer.uiBlocks.previewFrame.src = response.backdrop;
     ninoPlayer.uiBlocks.overview.innerText = response.overview;
     ninoPlayer.video.src = 'iframe/' + response.location;
+    ninoPlayer.location = response.location;
 
     if (response.episodeName !== undefined) {
         ninoPlayer.infoTexts.lower_title.innerText = response.episodeName;
@@ -204,6 +255,7 @@ const buildVideo = async (response, subs) => {
     else
         ninoPlayer.uiBlocks.logo.innerHTML = `<label id="fullContentLogo">${response.name}</label>`;
 
+    ninoPlayer.booleans.active = true;
     ninoPlayer.video.classList.remove("shrinkOut");
     ninoPlayer.uiBlocks.previewFrame.classList.remove("shrinkOut");
     ninoPlayer.uiBlocks.controls.classList.remove("slideLeftDo");
@@ -227,44 +279,23 @@ const buildVideo = async (response, subs) => {
     ninoPlayer.infoTexts.info.style.opacity = "0";
     ninoPlayer.infoTexts.info.style.zIndex = "-999";
     ninoPlayer.uiBlocks.controls.style.opacity = '1';
-    if (myFrame.cjs && myFrame.cjs.connected)
-        myFrame.cjs.castTwo(ninoPlayer.video, {base, auth: response.location})
 
     ninoPlayer.video.onloadedmetadata = async () => {
+        loadCast()
+        loadAirplay()
         ninoPlayer.video.currentTime = (response.position / 1000) * ninoPlayer.video.duration;
         ninoPlayer.uiBlocks.playFlash.style.opacity = '1';
         ninoPlayer.uiBlocks.playFlash.style.zIndex = '99';
         ninoPlayer.uiBlocks.playFlash.style.cursor = 'pointer';
         ninoPlayer.uiBlocks.buffer.style.display = "none";
         ninoPlayer.uiBlocks.controls.style.opacity = '0';
+        if (myFrame.cjs && myFrame.cjs.connected) {
+            myFrame.cjs.castTwo(ninoPlayer.video, {base, auth: response.location});
+            ninoPlayer.uiBlocks.castHolder.style.display = 'block';
+        }
     }
 
     loader.fade();
-}
-
-const displayControls = () => {
-    if (ninoPlayer.booleans.active) {
-        ninoPlayer.uiBlocks.controls.style.opacity = '1';
-        ninoPlayer.uiBlocks.holder.style.cursor = "auto";
-        ninoPlayer.video.style.cursor = "auto";
-        if (ninoPlayer.timers.controlsTimeout)
-            clearTimeout(ninoPlayer.timers.controlsTimeout);
-
-        ninoPlayer.timers.controlsTimeout = setTimeout(() => {
-            ninoPlayer.uiBlocks.controls.style.opacity = '0';
-            subtitles.block.style.opacity = "0";
-            subtitles.block.style.zIndex = "-999999";
-            subtitles.shown = false;
-            upNext.block.style.opacity = "0";
-            upNext.block.style.zIndex = "-999999";
-            if (ninoPlayer.booleans.active) {
-                ninoPlayer.uiBlocks.holder.style.cursor = "none";
-                ninoPlayer.video.style.cursor = "none";
-            }
-
-        }, 5000);
-    }
-    showInfo();
 }
 
 const loadAirplay = () => {
@@ -313,7 +344,8 @@ const loadCast = () => {
             ninoPlayer.buttons.cast.style.stroke = 'rgba(144, 197, 240, .9)';
             ninoPlayer.buttons.cast.style.display = 'block';
             ninoPlayer.uiBlocks.previewFrame.style.display = "block";
-            ninoPlayer.uiBlocks.foncer.style.display = "block";
+            ninoPlayer.uiBlocks.castHolder.style.display = "block";
+            ninoPlayer.infoTexts.castName.innerText = myFrame.cjs.device;
         })
 
         myFrame.cjs.on('disconnect', event => {
@@ -322,7 +354,7 @@ const loadCast = () => {
             ninoPlayer.video.currentTime = event.time;
             ninoPlayer.video.muted = event.muted;
             ninoPlayer.buttons.cast.style.stroke = 'rgba(255, 255, 255, .5)';
-            ninoPlayer.sliders.volumeFill.style.width = (pos * 100) + '%';
+            ninoPlayer.uiBlocks.castHolder.style.display = "none";
             ninoPlayer.video.volume = pos;
             if (event.paused !== ninoPlayer.video.paused)
                 playPause()
@@ -334,8 +366,7 @@ const loadCast = () => {
 
         myFrame.cjs.on('timeupdate', event => {
             ninoPlayer.userChromeCast = event.hasOwnProperty('time') && event.time > 0 ? event : ninoPlayer.userChromeCast;
-            if (event.time !== 0)
-                ninoPlayer.video.currentTime = event.time;
+            ninoPlayer.video.currentTime = event.time;
         })
 
         myFrame.cjs.on('end', event => {
@@ -344,48 +375,26 @@ const loadCast = () => {
 
         myFrame.cjs.on('buffering', event => {
             ninoPlayer.userChromeCast = event.hasOwnProperty('time') && event.time > 0 ? event : ninoPlayer.userChromeCast;
-            ninoPlayer.video.pause()
-            ninoPlayer.uiBlocks.buffer.style.display = "block";
             ninoPlayer.uiBlocks.foncer.style.display = "block";
+            ninoPlayer.video.pause()
         })
 
         myFrame.cjs.on('playing', event => {
             ninoPlayer.video.play()
             ninoPlayer.userChromeCast = event.hasOwnProperty('time') && event.time > 0 ? event : ninoPlayer.userChromeCast;
-            ninoPlayer.uiBlocks.buffer.style.display = "none";
-            ninoPlayer.uiBlocks.foncer.style.display = "block";
+            ninoPlayer.uiBlocks.foncer.style.display = "none";
+            ninoPlayer.uiBlocks.castHolder.style.display = "block";
         })
 
         myFrame.cjs.on('paused', event => {
             ninoPlayer.video.pause()
             ninoPlayer.userChromeCast = event.hasOwnProperty('time') && event.time > 0 ? event : ninoPlayer.userChromeCast;
-            ninoPlayer.uiBlocks.buffer.style.display = "none";
         })
+
+        myFrame.cjs.on('namespace', event => console.log(event))
 
         myFrame.cjs.on('error', event => console.log(event));
     }
-}
-
-const showInfo = () => {
-    ninoPlayer.infoTexts.information.classList.remove("slideRight");
-    ninoPlayer.infoTexts.information.classList.add("slideLeft");
-
-    setTimeout(() => {
-        ninoPlayer.infoTexts.info.style.opacity = "0";
-        ninoPlayer.infoTexts.info.style.zIndex = "-999";
-    }, 200);
-
-    if (ninoPlayer.timers.infoTimeout)
-        clearTimeout(ninoPlayer.timers.infoTimeout);
-
-    ninoPlayer.timers.infoTimeout = setTimeout(() => {
-        if (ninoPlayer.video.paused) {
-            ninoPlayer.infoTexts.information.classList.remove("slideLeft");
-            ninoPlayer.infoTexts.info.style.zIndex = "999";
-            ninoPlayer.infoTexts.info.style.opacity = '1';
-            ninoPlayer.infoTexts.information.classList.add("slideRight");
-        }
-    }, 10000);
 }
 
 const toggleFullScreen = () => {
@@ -468,8 +477,8 @@ $(document).ready(async function () {
     object = {type: object[0], value: object[1]};
     let response = await sFetch('iframe/decrypt/' + object.value);
     let subtitles = await sFetch("watch/subs/" + response.location);
-    loadCast()
-    loadAirplay()
+    ninoPlayer.buttons.airPlay.style.display = 'none';
+    ninoPlayer.buttons.cast.style.display = 'none';
     ninoPlayer.location = object.value;
     await buildVideo(response, subtitles)
     showInfo();
@@ -539,6 +548,8 @@ ninoPlayer.buttons.next.onmouseout = () => {
     upNext.block.style.zIndex = "-999999";
 }
 
+ninoPlayer.buttons.next.onclick = () => nextLoader();
+
 subtitles.trigger.onclick = () => {
     if (subtitles.shown) {
         subtitles.block.style.opacity = "0";
@@ -555,7 +566,6 @@ subtitles.trigger.onclick = () => {
 subtitles.none.onclick = () => hideSubs();
 
 ninoPlayer.video.onwaiting = () => {
-    ninoPlayer.uiBlocks.buffer.style.display = "block";
     ninoPlayer.uiBlocks.foncer.style.display = "block";
 }
 
@@ -603,25 +613,17 @@ ninoPlayer.video.ontimeupdate = async () => {
     if (myFrame.cjs && myFrame.cjs.connected)
         ninoPlayer.video.muted = true;
 
-    if (ninoPlayer.video.playing && !(myFrame.cjs && myFrame.cjs.connected)) {
-        ninoPlayer.uiBlocks.buffer.style.display = "none";
+    if (ninoPlayer.video.playing) {
+        ninoPlayer.uiBlocks.playFlash.removeAttribute('style');
         ninoPlayer.uiBlocks.foncer.style.display = "none";
-        ninoPlayer.uiBlocks.previewFrame.style.display = "none";
+
+        if (!(myFrame.cjs && myFrame.cjs.connected))
+            ninoPlayer.uiBlocks.previewFrame.style.display = "none";
     }
 
     if (ninoPlayer.video.currentTime > 60 + ninoPlayer.position || ninoPlayer.video.currentTime < ninoPlayer.position) {
         ninoPlayer.position = ninoPlayer.video.currentTime;
         await informDB();
-    }
-
-    if (ninoPlayer.booleans.guest && ninoPlayer.video.currentTime >= 300) {
-        if (myFrame.cjs && myFrame.cjs.connected)
-            await myFrame.cjs.disconnect();
-
-        ninoPlayer.video.pause();
-        await sFetch("auth/logout");
-        localStorage.removeItem('app_id');
-        window.location.reload();
     }
 
     if (ninoPlayer.booleans.recap && ninoPlayer.video.currentTime < 60) {
@@ -631,14 +633,6 @@ ninoPlayer.video.ontimeupdate = async () => {
         ninoPlayer.buttons.recap.style.display = "none";
         document.getElementById("fullContentLogo").style.visibility = "visible";
     }
-
-    let cdVal = ninoPlayer.video.duration - ninoPlayer.video.currentTime;
-    if (31 > cdVal && cdVal > 0 && !ninoPlayer.booleans.countdownStarted) {
-        ninoPlayer.booleans.countdownStarted = true;
-        await beginCountdown(Math.floor(cdVal));
-
-    } else if (cdVal > 30)
-        ninoPlayer.booleans.countdownStarted = false;
 
     showInfo();
 }
@@ -661,7 +655,6 @@ ninoPlayer.sliders.progressGroove.onclick = event => {
 ninoPlayer.sliders.volumeGroove.onclick = event => {
     let pos = ninoPlayer.sliders.volumeGroove.getBoundingClientRect();
     pos = ((event.clientX - pos.left) / (pos.right - pos.left));
-    ninoPlayer.sliders.volumeFill.style.width = (pos * 100) + '%';
     ninoPlayer.video.volume = pos;
 }
 
@@ -672,6 +665,13 @@ ninoPlayer.video.onvolumechange = () => {
         myFrame.cjs.volume(pos);
 }
 
-ninoPlayer.buttons.back.onclick = () => {
+ninoPlayer.uiBlocks.playFlash.onclick = () => {
+    ninoPlayer.video.play();
+}
+
+ninoPlayer.buttons.back.onclick = async () => {
+    if (myFrame.cjs && myFrame.cjs.connected)
+        await myFrame.cjs.disconnect();
+
     window.location.href = '/';
 }

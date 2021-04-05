@@ -19,12 +19,10 @@ class ChromeCast {
             if (!info.hasOwnProperty('error')) {
                 let subs = this.convertSubs(await views.getSubs(auth), link)
                 let {mimeType} = await views.getLocation(auth);
-                let {location, name, episodeName, backdrop, overview, logo} = info;
-                info = {location: link + 'stream/' + location, logo, name, backdrop, overview, subs, mimeType};
+                let {location, name, episodeName, overview, backdrop, logo} = info;
+                info = {location: link + 'stream/' + location, name, overview, backdrop, logo, subs, mimeType};
                 if (episodeName)
                     info.episodeName = episodeName;
-
-                console.log(subs);
             }
         } return info;
     }
@@ -32,13 +30,13 @@ class ChromeCast {
     convertSubs(subs, link){
         let array = ['eng', 'fre', 'ger', 'roy'];
         let names = ['English', 'French', 'German'];
-        let language = ['en-US', 'fr', 'de'];
+        let language = ['en', 'fr', 'de'];
 
         return array.map((item, index) => {
             if (subs[item]){
                 return {
                     id: index,
-                    type: 'text',
+                    type: 'text/vtt',
                     subtype: 'subtitles',
                     name: names[index] + ' Subtitle',
                     contentId: link + subs[item],

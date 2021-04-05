@@ -8,8 +8,10 @@ class Cast {
     constructor() {
         this._events = {};
 
-        this.connected  = false;
-        this.device     = 'Chromecast';
+        this.castSession = false;
+        this.connected   = false;
+        this.device      = 'Chromecast';
+        this.namespace   = 'urn:x-cast:com.nino.cast';
 
         this.src         = ''
         this.title       = ''
@@ -89,11 +91,17 @@ class Cast {
         this.connected = this._player.isConnected;
 
         if (this.connected) {
-            this.device = cast.framework.CastContext.getInstance().getCurrentSession().getCastDevice().friendlyName || this.device
+            this.castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+            this.device = cast.framework.CastContext.getInstance().getCurrentSession().getCastDevice().friendlyName || this.device;
+
+            this.castSession.addMessageListener(this.namespace, (namespace, data) => {
+                console.log(namespace, data)
+                this.emit('namespace', data);
+            })
         }
+
         this.state = !this.connected ? 'disconnected' : 'connected'
-        //this.emit('statechange')
-        this.emit('connect', this.connected);
+        this.emit(this.state.replace('ed', ''), this.connected);
     }
 
     _isMutedChanged() {
@@ -292,10 +300,8 @@ class Cast {
     }
 
     ping(obj) {
-        this.castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-        if(this.castSession)
-            this.castSession.sendMessage('urn:x-cast:com.nino.cast', obj);
-
+        if(this.connected && this.castSession)
+            this.castSession.sendMessage(this.namespace, obj);
     }
 
     updateData(){
