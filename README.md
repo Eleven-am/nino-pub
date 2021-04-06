@@ -37,7 +37,7 @@ It organises the Movies and TV shows on your drive account, providing you with t
 * Viewing more details on selected media ![](art/8.png)
 * Clicking on an actor or someone from the production team shows ![](art/9.png)
 * Clicking on their videography ![](art/10.png)
-* Clicking on a production company show ![](art/17.png)
+* Clicking on a production company shows ![](art/17.png)
 
 #### Some images from the video player
 * Preview frame ![](art/21.png)
@@ -45,7 +45,7 @@ It organises the Movies and TV shows on your drive account, providing you with t
 * Video paused ![](art/12.png)
 * Downloading videos require an auth key from the admin ![](art/13.png)
 * Videos can be shared from current position or from the beginning (no authentication required for sharing or viewing) ![](art/14.png)
-* Not available on this version of nino is subtitles ![](art/15.png)
+* Depending on your configuration nino supports subtitles ![](art/15.png)
 * You can skip recaps for TV Episodes ![](art/18.png)
 * When a video buffers ![](art/19.png)
 * Nino plays the next video once current video has been completely seen ![](art/20.png)
