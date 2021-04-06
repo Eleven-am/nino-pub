@@ -10,8 +10,6 @@ It organises the Movies and TV shows on your drive account, providing you with t
 * For setup clone the repo, install the dependencies and run "npm run start"
 * visit http://localhost:5000
 * Follow the setup process in the browser
-* Replace the nino.json file in the config folder
-* Close the server and run "npm run start" 
 * To scan your library or perform any admin task, visit http://localhost:5000/update (from here you can access other admin pages)
 * To create auth keys log in as admin and visit http://localhost:5000/auth/generateKey
 
