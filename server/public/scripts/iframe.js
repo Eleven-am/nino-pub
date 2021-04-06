@@ -566,7 +566,8 @@ subtitles.trigger.onclick = () => {
 subtitles.none.onclick = () => hideSubs();
 
 ninoPlayer.video.onwaiting = () => {
-    ninoPlayer.uiBlocks.foncer.style.display = "block";
+    if (!(myFrame.cjs && myFrame.cjs.connected))
+        ninoPlayer.uiBlocks.foncer.style.display = "block";
 }
 
 ninoPlayer.buttons.rewind.onclick = () => {

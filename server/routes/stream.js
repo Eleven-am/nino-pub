@@ -40,4 +40,8 @@ router.get('/:authKey/:auth', async (req, res) => {
     } else await res.status(400).json(response);
 })
 
+router.get('/hls/:folder/:file', async (req, res) => {
+    await drive.hlsStream(req.params.file, req.params.folder, res)
+})
+
 module.exports = router;
