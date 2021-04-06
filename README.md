@@ -55,6 +55,6 @@ It organises the Movies and TV shows on your drive account, providing you with t
 * Casting is supported on a custom player ![](art/28.png)
 * When media is being casted the browser player displays ![](art/29.png)
 * While the cast player starts off like ![](art/31.png)
-* When a user is view information in the browser the cast device displays ![](art/30.png)
+* When a user views metadata information in the browser the cast device displays ![](art/30.png)
 
 
