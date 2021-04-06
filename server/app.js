@@ -13,6 +13,7 @@ const port = process.env.PORT || 5000;
         const user = new User();
 
         app.use('/auth', require('./routes/auth'));
+        app.use('/cast', require('./routes/cast'));
         app.use('/info', require('./routes/info'));
         app.use('/images', require('./routes/images'));
         app.use('/iframe', require('./routes/iframe'));
