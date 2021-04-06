@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server/app",
-    "start": "node server/app",
+    "start": "nodemon server/app",
     "update": "killall node && node server/app",
-    "setup": "npm run install && node server/app"
+    "setup": "npm run install && nodemon server/app"
   },
   "keywords": [],
   "author": "Roy Ossai",
