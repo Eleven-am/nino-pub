@@ -588,7 +588,7 @@ const download = async json => {
         json.deleteAndRename = deleteAndRename;
 
     } await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({
-        username: admin_mail,
+        username: json.admin_mail,
         cypher,
         data: json,
         homeBase
