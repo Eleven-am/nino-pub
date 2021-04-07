@@ -81,7 +81,7 @@ const ninoPlayer = {
         shuffleMode: false,
         countdownStarted: false
     }, video: document.querySelector('.video-container video'),
-    location: false,
+    location: false, cypher: false,
     activeSub: 'na',
     subs: [],
     myFrame: {
@@ -119,7 +119,6 @@ const modifyPLayPause = () => {
         ninoPlayer.buttons.play.playButton.removeAttribute("style");
         ninoPlayer.buttons.play.pauseButton.style.display = 'none';
     }
-
 }
 
 const playPause = () => {
@@ -445,7 +444,7 @@ const switchSubs = () => {
 
 const informDB = async () => {
     let position = (ninoPlayer.position / ninoPlayer.video.duration) * 1000;
-    await pFetch('iframe/inform', JSON.stringify({cypher: ninoPlayer.location, position}));
+    await pFetch('iframe/inform', JSON.stringify({cypher: ninoPlayer.cypher, position}));
 }
 
 async function sFetch(url) {
@@ -479,7 +478,7 @@ $(document).ready(async function () {
     let subtitles = await sFetch("watch/subs/" + response.location);
     ninoPlayer.buttons.airPlay.style.display = 'none';
     ninoPlayer.buttons.cast.style.display = 'none';
-    ninoPlayer.location = object.value;
+    ninoPlayer.cypher = object.value;
     await buildVideo(response, subtitles)
     showInfo();
 })
