@@ -90,6 +90,8 @@ const login = () => {
                         let check = confirm('would you like to setup automatic download?, requires an active deluge web server.')
                         if (check)
                             loadDeluge(response)
+                        else
+                            await download(response.data);
 
                     } else {
                         delete response.action;
@@ -97,8 +99,16 @@ const login = () => {
                         let check = confirm('would you like to set up open subtitles');
                         if (check)
                             loadOpenSubs(response);
-                        else
-                            await download(response.data)
+
+                        else if (!response.data.deluge){
+                            let check = confirm('would you like to setup automatic download?, requires an active deluge web server.')
+                            if (check)
+                                loadDeluge(response)
+                            else
+                                await download(response.data);
+
+                        } else
+                            await download(response.data);
                     }
                 }
             } else {
