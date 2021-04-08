@@ -303,8 +303,13 @@ const loadTMDB = () => {
                     let check = confirm('would you like to set up open subtitles');
                     if (check)
                         loadOpenSubs();
-                    else
-                        loginGoogle('homeBase');
+                    else {
+                        let check = confirm('would you like to setup automatic download?, requires an active deluge web server.')
+                        if (check)
+                            loadDeluge();
+                        else
+                            loginGoogle('homeBase');
+                    }
                 }, 1000)
             }
         };
