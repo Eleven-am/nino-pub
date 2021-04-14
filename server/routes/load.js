@@ -6,8 +6,8 @@ const {Editor} = require('../../classes/lists')
 let structure = require('../../config/structure.json')
 let running = {};
 structure = {...structure.user, ...structure.primary};
-let spring = new SpringBoard();
-let editor = new Editor();
+const spring = new SpringBoard();
+const editor = new Editor();
 
 router.get('/:type', async (req, res) => {
     let response = false;
@@ -48,11 +48,13 @@ router.get('/:type', async (req, res) => {
         else if (req.params.type === "suggestion")
             response.data = await spring.getSuggestion(req.session.user_id);
 
-        else if (req.params.type === "trending")
-            response.data = await spring.getTrending();
-
         else if (req.params.type === "tv")
             response.data = await spring.getLibrary(false, false);
+
+        else if (req.params.type === "trending") {
+            let {info} = await spring.getTrending();
+            response.data = info;
+        }
 
         else {
             response.data = await spring.getList(req.params.type);

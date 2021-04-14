@@ -1,5 +1,4 @@
 const rarBgApi = require('rarbg-api')
-const SpringBoard = require("./springBoard")
 const {sAxios, log, formatBytes, toBytes} = require("../base/baseFunctions")
 const {getExternalId, getSeasonInfo, getDetails} = require("../base/tmdb-hook")
 const {db, type, insert} = require('../base/sqlize')
@@ -7,10 +6,12 @@ const {deluge} = require('../config/nino.json')
 let delugeHandler = null;
 const Torrent = require('torrent-search-api')
 const DriveHandler = require("./driveHandler");
+const SpringBoard = require("./springBoard");
 const providers = Torrent.getProviders()
+const spring = new SpringBoard();
 
-if (require('../config/nino.json').deluge !== null) {
-    const {deluge_url, directory, password} = require('../config/nino.json').deluge;
+if (deluge) {
+    const {deluge_url, directory, password} = deluge;
     delugeHandler = require('../base/deluge')(deluge_url, password, directory);
 }
 
@@ -23,7 +24,7 @@ for (let provider of providers)
         if (error)
             console.error(error);
         else {
-            await delugeHandler.connect(result.id, (error, result) => {
+            await delugeHandler.connect(result[0].id, (error, result) => {
                 if (error)
                     console.error(error);
             });
@@ -70,24 +71,24 @@ class Magnet {
      * @returns {Promise<void>}
      */
     async getMagnets(user_id) {
-        let spring = new SpringBoard();
-        let magnetEntries = await spring.loadSuggestions(user_id, true);
-        magnetEntries = magnetEntries.map(show => {
-            delete show.id;
-            show.viewed = false;
-            return show;
-        });
+        if (this.delugeActive()){
+            let magnetEntries = await spring.loadSuggestions(user_id, true);
+            magnetEntries = magnetEntries.map(show => {
+                delete show.id;
+                show.viewed = false;
+                return show;
+            });
 
-        let originals = await Entry.findAll({where: {viewed: false}});
+            let originals = await Entry.findAll({where: {viewed: false}});
 
-        for (let magnet of originals) {
-            let model = magnet.get('type') ? db.models.movie : db.models.show;
-            magnet.viewed = await model.findOne({where: {tmdb_id: magnet.tmdb_id}}) !== null;
-            await insert(Entry, magnet, {tmdb_id: magnet.tmdb_id, type: magnet.type});
+            for (let magnet of originals) {
+                let model = magnet.get('type') ? db.models.movie : db.models.show;
+                magnet.viewed = await model.findOne({where: {tmdb_id: magnet.tmdb_id}}) !== null;
+                magnetEntries.push(magnet);
+            }
+
+            await Entry.bulkCreate(magnetEntries);
         }
-
-        for (const magnet of magnetEntries)
-            await insert(Entry, magnet, {tmdb_id: magnet.tmdb_id, type: magnet.type});
     }
 
     /**
@@ -190,7 +191,7 @@ class Magnet {
      * @returns {Promise<void>}
      */
     async downloadTorrent(magnet) {
-        if (deluge !== null){
+        if (deluge){
             await delugeHandler.add(magnet, (error, result) => {
                 if (error)
                     return {error};
@@ -326,18 +327,19 @@ class Magnet {
      * @returns {Promise<{size: string, url: (*|*)}|string>}
      */
     async findSeason(tmdb_id, season, episode) {
+        let search;
         let {name} = await getDetails(0, tmdb_id);
         let {imdb_id} = await getExternalId(tmdb_id, 0);
 
         let allProviders = [];
         if (episode === undefined) {
-            let search = name + ' S' + (season > 9 ? '' : '0') + season;
+            search = name + ' S' + (season > 9 ? '' : '0') + season;
             allProviders = allProviders.concat(await Torrent.search(search));
-            name = name + ' Season ' + season;
-            allProviders = allProviders.concat(await Torrent.search(name));
+            search = name + ' Season ' + season;
+            allProviders = allProviders.concat(await Torrent.search(search));
         } else {
-            name = `${name} S${(season > 9 ? '' : '0') + season}E${(episode > 9 ? '' : '0') + episode}`;
-            allProviders = allProviders.concat(await Torrent.search(name));
+            search = `${name} S${(season > 9 ? '' : '0') + season}E${(episode > 9 ? '' : '0') + episode}`;
+            allProviders = allProviders.concat(await Torrent.search(search));
         }
 
         let response = await new Promise((resolve) => {
@@ -347,7 +349,7 @@ class Magnet {
                 if (episode === undefined)
                     resolve1(rarBgApi.search(imdb_id, options, 'imdb'))
                 else
-                    resolve1(rarBgApi.search(name, options))
+                    resolve1(rarBgApi.search(search, options))
 
             }).then(data => resolve(data))
                 .catch(err => {
@@ -374,7 +376,7 @@ class Magnet {
                 let regex = /[sS](?<season>\d{2})/;
                 let matches = item.title.match(regex);
                 if (matches && matches.groups) {
-                    if (parseInt(matches.groups.season) === season && !/[eE]\d+/.test(item.title))
+                    if (parseInt(matches.groups.season) === season && !/Episode|E.*?\d+/i.test(item.title))
                         resolve.push(item);
 
                 } else {
@@ -392,6 +394,11 @@ class Magnet {
                     if (parseInt(matches.groups.season) === season && parseInt(matches.groups.episode) === episode)
                         resolve.push(item);
             }
+        }
+
+        if (resolve.length > 1){
+            let temp = resolve.filter(item => item.title.includes(name) || item.title.includes(name.replace(/ /g, '.')));
+            resolve = temp.length ? temp : resolve;
         }
 
         if (resolve.length > 1) {
@@ -436,7 +443,7 @@ class Magnet {
      * @returns {boolean}
      */
     delugeActive() {
-        return deluge !== null;
+        return !!deluge;
     }
 }
 

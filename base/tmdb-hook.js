@@ -219,41 +219,19 @@ const getSeasonInfo = async obj => {
 }
 
 /**
- * @desc gets the episode information of a given season might also use user id for watched position
+ * @desc gets the Episode information of a given episode, season and show
  * @param obj
- * @param imageImportant
  * @returns {Promise<{overview: *, found: boolean, name: (string|*), poster: string}|{overview: *, found: boolean, name: (string|*), poster: (string|string|*|string)}>}
  */
-const getEpisodeInfo = async (obj, imageImportant) => {
-    let response = await sFetch(base + "tv/" + obj.tmdb_id + "/season/" + obj.season_id + "/episode/" + obj.episode + "?api_key=" + apiKey + "&language=en-US");
-    let head = await sFetch('https://image.tmdb.org/t/p/original' + response.still_path, true);
-    let content_type = head.get('Content-Type');
-
-    if (imageImportant && (response.hasOwnProperty("status_code") || response.still_path === null || content_type === 'text/html')) {
-        let nResponse = await sFetch(base + "tv/" + obj.tmdb_id + "?api_key=" + apiKey + "&language=en-US");
-
-        return {
-            found: !(response.name === undefined || response.name === null),
-            name: response.name === undefined || response.name === null ? "Episode " + obj.episode : response.name,
-            overview: response.overview === undefined || response.overview === "" ? nResponse.overview : response.overview,
-            poster: nResponse.backdrop_path === null ? obj.poster : 'https://image.tmdb.org/t/p/original' + nResponse.backdrop_path
-        }
-
-    } else {
-        return {
-            found: !(response.name === undefined || response.name === null),
-            name: response.name === undefined || response.name === null ? "Episode " + obj.episode : response.name,
-            overview: response.overview,
-            poster: response.still_path ? "https://image.tmdb.org/t/p/original" + response.still_path : undefined
-        }
-    }
+const getEpisode = async obj => {
+    return await sFetch(base + "tv/" + obj.tmdb_id + "/season/" + obj.season_id + "/episode/" + obj.episode + "?api_key=" + apiKey + "&language=en-US");
 }
 
 /**
  * @desc searches on TMDB for popular and trending items in the week present in the database
  * @param dBase the host database || optional
  * @param limit how many pages down should one go for trending
- * @returns {Promise<[]>}
+ * @returns {Promise<{info: [], missing: []|[]}>}
  */
 const trending = async (limit, dBase) => {
     dBase = dBase || false;
@@ -262,6 +240,7 @@ const trending = async (limit, dBase) => {
     let tv = await sFetch(base + "trending/tv/week?api_key=" + apiKey);
 
     let int = 1;
+    let missing = [];
     let movieBase = movies.results;
     let tvBase = tv.results
 
@@ -277,7 +256,9 @@ const trending = async (limit, dBase) => {
         int++;
     } while (int < limit);
 
-    return searchDbase ? movieBase.reduite(dBase, 1, 'popularity').concat(tvBase.reduite(dBase, 0, 'popularity')).uniqueID('tmdb_id').sortKey('popularity', false) : movieBase.concat(tvBase);
+    if (searchDbase)
+        missing = movieBase.missingEntry(dBase, 1).concat(tvBase.missingEntry(dBase, 0)).uniqueID('tmdb_id')
+    return searchDbase ? {info : movieBase.reduite(dBase, 1, 'popularity').concat(tvBase.reduite(dBase, 0, 'popularity')).uniqueID('tmdb_id').sortKey('popularity', false), missing}: movieBase.concat(tvBase);
 }
 
 /**
@@ -521,7 +502,6 @@ const findPerson = async name => {
 
 module.exports = {
     trending,
-    getEpisodeInfo,
     getSeasonInfo,
     getCollection,
     getDetails,
@@ -533,6 +513,7 @@ module.exports = {
     getGenre,
     getProd,
     getPersonInfo,
+    getEpisode,
     getMovieRating,
     loadPortrait,
     fanArtImages,

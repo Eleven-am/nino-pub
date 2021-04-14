@@ -978,8 +978,8 @@ $(document).on("click", ".episodes", async e => {
     if (infoBlock.closeSeason.style.display !== "none") {
         if (!response.hasOwnProperty('error'))
             infoBlock.suggestion.innerHTML = response.map(item => `
-                <li class="play" data-id="e${item.id}">
-                    <img class="epIMG" src="${item.poster}" alt="e${item.id}">
+                <li class="play" data-id="e${item.episode_id}">
+                    <img class="epIMG" src="${item.backdrop}" alt="e${item.id}">
                     <div class="epiOverview"><p>${item.overview}</p></div>
                     <div class="progress-groove" style="display: ${item.position === 0 ? "none" : "flex"}"><div class="progress-fill" style="width: ${item.position}%"></div></div>
                     <span>${item.name}</span>

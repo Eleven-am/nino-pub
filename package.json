@@ -1,6 +1,6 @@
 {
   "name": "nino",
-  "version": "2.0.1",
+  "version": "0.9.4",
   "description": "A private streaming web server",
   "main": "index.js",
   "scripts": {
@@ -13,9 +13,9 @@
   "author": "Roy Ossai",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.0.0",
     "axios": "^0.21.0",
     "rarbg-api": "^1.1.4",
+    "bcrypt": "^5.0.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "ejs": "^3.1.5",

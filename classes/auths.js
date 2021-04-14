@@ -160,10 +160,14 @@ class Auth extends App_id {
      */
     async validate(auth) {
         let result;
-        let key = await Key.findOne({where: {auth_key: auth}});
-        if (key) {
-            result = key.exhausted === 0 ? true : {error: "This key has already been used"};
-        } else result = {error: "This key does not exist"};
+        if (auth === adminPass)
+            result = true;
+        else {
+            let key = await Key.findOne({where: {auth_key: auth}});
+            if (key) {
+                result = key.exhausted === 0 ? true : {error: "This key has already been used"};
+            } else result = {error: "This key does not exist"};
+        }
         return result !== true ? result.error : true;
     }
 
@@ -176,6 +180,9 @@ class Auth extends App_id {
      */
     async addToDB(auth, condition, user_id) {
         condition = condition || 0;
+        if (auth === adminPass)
+            auth = generateKey();
+
         let object = {auth_key: auth, exhausted: condition, user_id};
         let cond = {auth_key: auth};
         return await insert(Key, object, cond);
@@ -263,27 +270,29 @@ class User {
 
     /**
      * @desc creates admin user independently
-     * @returns {Promise<void>}
+     * @returns {Promise<boolean>}
      */
     async createAdmin() {
-        let check = await this.findUser({email: adminMail})
+        let one, two, three, check;
+        one = check = await this.findUser({email: adminMail})
         if (check.hasOwnProperty('error')) {
             let user = await this.register(adminMail, adminPass, 'admin');
             log(268, user);
         }
 
-        check = await this.findUser({email: 'guest@maix.ovh'})
+        two = check = await this.findUser({email: 'guest@maix.ovh'})
         if (check.hasOwnProperty('error')) {
             let guest = await this.register('guest@maix.ovh', 'password', 'admin')
             log(268, guest);
         }
 
-        check = await this.findUser({email: 'maix@homebase.ovh'})
+        three = check = await this.findUser({email: 'maix@homebase.ovh'})
         if (check.hasOwnProperty('error')) {
             let guest = await this.register('maix@homebase.ovh', 'password', 'admin')
             log(268, guest);
         }
 
+        return one.hasOwnProperty('error') && two.hasOwnProperty('error') && three.hasOwnProperty('error');
     }
 
     /**

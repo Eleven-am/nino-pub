@@ -3,7 +3,7 @@ const Show = require('./episodes')
 const Movie = require('./movies')
 const Drive = require("./driveHandler");
 const {User} = require('./auths')
-const {getDetails, getEpisodeInfo, trending, pageTwo} = require("../base/tmdb-hook");
+const {getDetails, trending, pageTwo} = require("../base/tmdb-hook");
 const {log: ln, create_UUID} = require("../base/baseFunctions")
 const log = (line, info) => ln(line, 'watched', info)
 
@@ -247,17 +247,12 @@ class Watched {
      * @param movie determines if the item being checked is a movie/episode
      * @returns {Promise<number>}
      */
-    async checkSeen(user_id, info_id, movie) {
-        let result = 0;
-        movie = movie || false;
+    async checkSeen(user_id, info_id) {
         info_id = `${info_id}`;
         let user = user_id ? await db.models.user.findOne({where: {user_id}}) : null;
-        if (user) {
-            let response = movie ? await user.getWatches({where: {movie_id: info_id}}) : await user.getWatches({where: {episode_id: info_id}});
-            result = response.length ? response[0] : false;
-            result = result !== false ? result.get('position') : 0;
-
-        }
+        let response = user ? await user.getWatches({where: {movie_id: info_id}}): [];
+        let result = response.length ? response[0] : false;
+        result = result !== false ? result.get('position') : 0;
         return result;
     }
 
@@ -352,8 +347,8 @@ class Watched {
             let episodes = await Shuffle.findAll({where: {user_id}, raw: true});
             if (episodes[0].episode_id === parseInt(info_id) && episodes.length > 1) {
                 let show = new Show('00');
-                let {name, overview, poster} = await show.getEpisode(episodes[1].episode_id);
-                result = {name, overview, play: 'x' + episodes[1].episode_id, backdrop: poster};
+                let {name, overview, backdrop} = await show.getEpisode(episodes[1].episode_id);
+                result = {name, overview, play: 'x' + episodes[1].episode_id, backdrop};
 
                 episodes.shift();
 
@@ -367,8 +362,8 @@ class Watched {
 
                 if (show.length){
                     show = await this.getNextEpisode(user_id, show[0].tmdb_id);
-                    let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
-                    result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
+                    let {name, overview, backdrop} = await showClass.getEpisode(show.episode_id);
+                    result = {name, overview, play: 'e' + show.episode_id, backdrop};
                 }
             }
 
@@ -383,8 +378,8 @@ class Watched {
 
             if (nextEpisode !== null) {
                 let show = new Show('00');
-                let {name, overview, poster} = await show.getEpisode(nextEpisode.get('episode_id'));
-                result = {name, overview, play: 'e' + nextEpisode.get('episode_id'), backdrop: poster};
+                let {name, overview, backdrop} = await show.getEpisode(nextEpisode.get('episode_id'));
+                result = {name, overview, play: 'e' + nextEpisode.get('episode_id'), backdrop};
             } else {
                 let showClass = new Show(episode.get('show_id'));
                 let show = await showClass.getRecommendations(true);
@@ -392,8 +387,8 @@ class Watched {
 
                 if (show.length){
                     show = await this.getNextEpisode(user_id, show[0].tmdb_id);
-                    let {name, overview, poster} = await showClass.getEpisode(show.episode_id);
-                    result = {name, overview, play: 'e' + show.episode_id, backdrop: poster};
+                    let {name, overview, backdrop} = await showClass.getEpisode(show.episode_id);
+                    result = {name, overview, play: 'e' + show.episode_id, backdrop};
                 }
             }
         }
@@ -443,16 +438,12 @@ class Watched {
             } else {
                 let episode = await this.getNextEpisode(user_id, item['show.tmdb_id'], false);
                 if (episode) {
-                    let obj = await db.models.episode.findOne({where: {episode_id: episode.episode_id}});
-                    obj = obj.get();
-                    obj.tmdb_id = item['show.tmdb_id'];
-                    let {poster, overview} = await getEpisodeInfo(obj, true);
-                    poster = poster === undefined ? item['show.backdrop'] : poster;
+                    let episodeClass = new Show('00');
+                    let {backdrop, overview} = await episodeClass.getEpisode(episode.episode_id);
                     item = {
-                        backdrop: poster,
                         logo: item['show.logo'],
                         name: item['show.name'],
-                        overview,
+                        overview, backdrop,
                         position: episode.position,
                         tmdb_id: item['show.tmdb_id'],
                         type: 0
@@ -591,7 +582,7 @@ class Views extends Watched {
     /**
      * @desc gets the metadata for the metatags, used by
      * @param auth
-     * @returns {Promise<{error: string}>}
+     * @returns {Promise<{overview, name, poster}>}
      */
     async getAuthTags(auth) {
         let response = {error: 'No such item exists'};
@@ -613,12 +604,9 @@ class Views extends Watched {
                 });
 
                 if (episode) {
-                    let video = {...episode.get(), ...episode.show.get()};
-                    let obj = await getEpisodeInfo(video, false);
-                    response = {
-                        name: obj.found ? `S${video.season_id}, E${video.episode}: ${obj.name}` : video.name + ": S" + video.season_id + ", E" + video.episode,
-                        overview: obj.overview, poster: obj.poster
-                    }
+                    let episodeClass = new Show('00');
+                    let {name, overview, backdrop} = await episodeClass.playEpisode(episode.episode_id);
+                    response = {name, overview, poster: backdrop}
                 }
             }
         }
@@ -784,15 +772,12 @@ class Views extends Watched {
                 result = {backdrop, logo, type, name, overview, tmdb_id, position: entry.get('position')}
 
             } else if (!entry.get('type')) {
-                let {logo, type, name, tmdb_id, backdrop} = (await entry.getShow()).get();
+                let {logo, type, name, tmdb_id} = (await entry.getShow()).get();
                 let episode = await this.getNextEpisode(user_id, tmdb_id, false);
                 if (episode) {
-                    let obj = await db.models.episode.findOne({where: {episode_id: episode.episode_id}});
-                    obj = obj.get();
-                    obj.tmdb_id = tmdb_id;
-                    let {poster, overview} = await getEpisodeInfo(obj, true);
-                    poster = poster === undefined ? backdrop : poster;
-                    result = {backdrop: poster, logo, type, name, overview, tmdb_id, position: episode.position};
+                    let episodeClass = new Show('00');
+                    let {backdrop, overview} = await episodeClass.getEpisode(episode.episode_id);
+                    result = {backdrop, logo, type, name, overview, tmdb_id, position: episode.position};
                 } else result = {done: 's' + tmdb_id};
 
             } else if (entry.get('type'))
@@ -818,15 +803,12 @@ class Views extends Watched {
                 else {
                     let show = await entry.getShow();
                     if (show) {
-                        entry = entry.get();
-                        entry.tmdb_id = show.get('tmdb_id');
-                        let {name} = await getEpisodeInfo(entry, false);
-                        name = show.get('name') + ' S' + entry.season_id + '. E' + entry.episode + '. ' + name;
+                        let episodeClass = new Show('00');
+                        let {name} = await episodeClass.playEpisode(entry.episode_id);
                         result = {name, id: entry.gid};
                     }
                 }
             }
-
         }
         return result;
     }

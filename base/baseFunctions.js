@@ -74,7 +74,7 @@ const sFetch = async (url, head) => {
     head = head || false;
     return await fetch(url)
         .then(response => {
-            return head === true || response.status > 207 ? head === true ? response.headers: {headers: response.headers} : response.json();
+            return head === true || response.status > 207 ? head === true ? response.headers : {headers: response.headers} : response.json();
         }).catch(reason => {
             console.log(reason);
             return false;
@@ -242,18 +242,39 @@ Array.prototype.expand = function (array2, rep) {
     return array.concat(array2).sortKey('rep', false).uniqueID('tmdb_id');
 }
 
+Array.prototype.missing = function (array2, key1, key2) {
+    let array = []
+    for (let i = 0; i < this.length; i++)
+        if (!array2.some(item => item[key2] === this[i][key1]))
+            array.push(this[i]);
+    return array
+}
+
+Array.prototype.missingEntry = function (array2, val) {
+    let array = []
+    for (let i = 0; i < this.length; i++)
+        if (!array2.some(item => item.tmdb_id === this[i].id && item.type === val))
+            array.push({
+                name: this[i].title === undefined ? this[i].name : this[i].title,
+                tmdb_id: this[i].id, type: this[i].media_type === 'movie'
+            });
+    return array
+}
+
 /**
  * @desc helps compare the similarities between two strings
  * @param string
+ * @param val
  * @returns {number|*}
  */
-String.prototype.levenstein = function(string) {
+String.prototype.levenstein = function (string, val) {
+    val = val || false;
     let a = this, b = string + "", m = [], i, j, min = Math.min;
 
     if (!(a && b)) return (b || a).length;
 
-    for (i = 0; i <= b.length; m[i] = [i++]);
-    for (j = 0; j <= a.length; m[0][j] = j++);
+    for (i = 0; i <= b.length; m[i] = [i++]) ;
+    for (j = 0; j <= a.length; m[0][j] = j++) ;
 
     for (i = 1; i <= b.length; i++) {
         for (j = 1; j <= a.length; j++) {
@@ -261,11 +282,30 @@ String.prototype.levenstein = function(string) {
                 ? m[i - 1][j - 1]
                 : m[i][j] = min(
                     m[i - 1][j - 1] + 1,
-                    min(m[i][j - 1] + 1, m[i - 1 ][j] + 1))
+                    min(m[i][j - 1] + 1, m[i - 1][j] + 1))
         }
     }
 
-    return m[b.length][a.length];
+    return val ? m[b.length][a.length] < val: m[b.length][a.length];
+}
+
+String.prototype.strip = function (string) {
+    let count = 0;
+    let index = -1;
+    let first = this.split(' ').filter(item => item !== '');
+    let second = string.split(' ');
+    let length = first.length > second.length ? first.length : second.length;
+
+    for (let i = 0; i < first.length; i++)
+        for (let j = index +1; j < second.length; j++) {
+            if (first[i].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase() === second[j].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase()) {
+                index = j;
+                count++
+                break;
+            }
+        }
+
+    return (count/length) * 100 > 70;
 }
 
 /**

@@ -547,8 +547,6 @@ ninoPlayer.buttons.next.onmouseout = () => {
     upNext.block.style.zIndex = "-999999";
 }
 
-ninoPlayer.buttons.next.onclick = () => nextLoader();
-
 subtitles.trigger.onclick = () => {
     if (subtitles.shown) {
         subtitles.block.style.opacity = "0";

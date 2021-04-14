@@ -735,11 +735,10 @@ share.deny.onclick = async () => {
     await sFetch('iframe/modify/' + share.validated + '/' + 0);
 }
 
-download.confirm.onclick = () => {
+download.confirm.onclick = async () => {
+    download.validated = download.validated === true ? true: await pFetch('auth/validateAuthKey', JSON.stringify({auth: download.input.value}));
     if (download.validated === true) {
-        let pathname = window.location.pathname;
-        let value = pathname.replace("/watch=", "");
-        window.location.href = '/stream/' + download.input.value + '/' + value;
+        window.location.href = '/stream/' + download.input.value + '/' + ninoPlayer.location;
         download.container.removeAttribute("style");
         download.block.removeAttribute("style");
         callback(download);

@@ -23,6 +23,7 @@ const nextDown = document.getElementById("nextDown");
 const suggest = document.getElementById("suggest");
 const magnet = document.getElementById("magnet");
 const editor = document.getElementById("editor");
+const download = document.getElementById("download");
 const hide = document.getElementById("hide");
 const subs = document.getElementById("subs");
 const deleteEntry = document.getElementById("delete");
@@ -479,6 +480,12 @@ window.onload = async () => {
 subs.onclick = async () => {
     let val = confirm('scan all subs or missing subs ? all[TRUE]; missing[FALSE]')
     await reach('forceScan/' + val);
+}
+
+download.onclick = async () => {
+    let check = confirm('Would you like to download every entry related to media on your database?')
+    if (check)
+        await reach('autoDownload')
 }
 
 nextDown.onclick = async () => {

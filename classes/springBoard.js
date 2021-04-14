@@ -9,8 +9,6 @@ const {getDetails, trending, loadPortrait} = require("../base/tmdb-hook");
 const {db, insert, queryDB} = require('../base/sqlize')
 const {User} = require("../classes/auths");
 const user = new User();
-user.createAdmin()
-    .catch(error => console.log(error))
 
 class SpringBoard extends Views {
     /**
@@ -34,7 +32,7 @@ class SpringBoard extends Views {
             let movie = new Movie(info_id);
             result = await movie.getInfo();
             if (!result.hasOwnProperty('error')) {
-                let position = await this.checkSeen(user_id, result.movie_id, true);
+                let position = await this.checkSeen(user_id, result.movie_id);
                 result.seen = position > 919;
 
                 if (position !== 0)
@@ -159,25 +157,22 @@ class SpringBoard extends Views {
         let show = new Show(info_id);
         let res = await show.getEpisodes(season_id);
         let episodes = [];
-        let backdrop = '';
 
-        if (res.length) {
-            backdrop = await db.models.show.findOne({where: {tmdb_id: info_id.replace('s', '')}});
-            backdrop = backdrop ? backdrop.get('backdrop') : '';
+        if (!res.hasOwnProperty('error')) {
+            let user = await db.models.user.findOne({where: {user_id}});
+            if (user){
+                let seenEpisodes = await user.getWatches({where: {show_id: res.show_id}});
+
+                for (let item of res.episodes) {
+                    let temp = seenEpisodes.find(entry => item.episode_id === entry.episode_id);
+                    item.position = temp ? temp.position > 920 ? 100 : temp.position / 10 : 0;
+                    let {backdrop, episode, name, overview, position, episode_id} = item;
+                    name = /^Episode \d+/.test(name) ? name: item.episode + ' ' + name;
+                    episodes.push({backdrop, episode, episode_id, name, overview, position});
+                }
+            }
         }
 
-        for (let item of res) {
-            let temp = await show.getEpisode(item.episode_id);
-            let position = await this.checkSeen(user_id, item.episode_id);
-            temp.position = position >= 920 ? 100 : position / 10;
-
-            delete temp.found;
-            temp.poster = temp.poster === undefined ? backdrop : temp.poster;
-            temp.name = item.episode + ' ' + temp.name;
-            temp.id = item.episode_id;
-            episodes.push(temp);
-
-        }
         return episodes;
     }
 
@@ -219,7 +214,7 @@ class SpringBoard extends Views {
 
     /**
      * @desc returns the trending movies/shows on TMDB ATM that are available on the database, sorted by popularity
-     * @returns {Promise<*[]>}
+     * @returns {Promise<{info: [], missing: []}>}
      */
     async getTrending() {
         let dBase = (await this.getLibrary(true, false)).concat(await this.getLibrary(false, false));

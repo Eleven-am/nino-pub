@@ -1,5 +1,5 @@
-const {getEpisodeInfo, getDetails, getSeasonInfo} = require("../base/tmdb-hook")
-const {db, type, insert, Sequelize} = require('../base/sqlize')
+const {getDetails, getSeasonInfo, getEpisode} = require("../base/tmdb-hook")
+const {db, type, Sequelize} = require('../base/sqlize')
 const {log: ln} = require('../base/baseFunctions.js')
 const log = (line, info) => ln(line, 'episodes', info)
 const TvShow = require('./tvShows');
@@ -34,21 +34,28 @@ class Episode extends TvShow {
     /**
      * @desc gets an episode for display purposes
      * @param episode_id
-     * @returns {Promise<{error: string}|{overview: *, found: boolean, name: (string|*), poster: string}|{overview: *, found: boolean, name: (string|*), poster: (string|*)}>}
+     * @param play
+     * @returns {Promise<{overview: (*), name: string, poster: (string|*)}| {error: string}>}
      */
-    async getEpisode(episode_id) {
+    async getEpisode(episode_id, play = false) {
         let episode = await Entry.findOne({
             where: {episode_id},
             include: [{model: db.models.show, attributes: ['tmdb_id', 'name']}]
         });
 
-        if (episode === null)
-            return {error: "No such episode exists"};
-
-        else {
-            let video = {...episode.get(), ...episode.show.get()};
-            return await getEpisodeInfo(video, true);
+        if (episode) {
+            let show = await db.models.show.findOne({where: {id: episode.show_id}});
+            if (show) {
+                let showInfo = await getDetails(0, show.tmdb_id)
+                let episodeInfo = await getEpisode({...episode.get(), ...show.get()});
+                let overview = episodeInfo.overview && episodeInfo.overview !== ''? episodeInfo.overview: showInfo.overview;
+                let name = episodeInfo.name ? episodeInfo.name: 'Episode ' + episode.episode;
+                let backdrop = episodeInfo.still_path ? 'https://image.tmdb.org/t/p/original'+ episodeInfo.still_path: episode.backdrop;
+                return play ? {episodeInfo: episode.get(), show: show.get(), info: {name, overview, backdrop}} : {name, overview, backdrop};
+            }
         }
+
+        return play? null: {error: "No such episode exists"};
     }
 
     /**
@@ -103,28 +110,22 @@ class Episode extends TvShow {
     /**
      * @desc prepares and loads up the relevant information for nino player
      * @param episode_id
-     * @returns {Promise<{error: string}|{next: number, overview: *, backdrop, episodeName: string, name, logo, location: unknown, type: number}>}
+     * @returns {Promise<{error: string}|{next: number, overview: *, backdrop, episodeName: string, name, logo, location: string, type: number}>}
      */
     async playEpisode(episode_id) {
-        let episode = await Entry.findOne({
-            where: {episode_id},
-            include: [{model: db.models.show, attributes: ['tmdb_id', 'name', 'logo', 'backdrop']}]
-        });
+        let response = await this.getEpisode(episode_id, true);
+        if (response) {
+            let {episodeInfo, show, info} = response;
+            let {name, backdrop, logo} = show;
+            let {episode, season_id, gid} = episodeInfo;
 
-        if (episode === null)
-            return {error: "No such episode exists"};
-
-        else {
-            let gid = episode.get('gid');
-            let name = episode.show.get('name');
-            let video = {...episode.get(), ...episode.show.get()};
-            let {logo, backdrop} = video;
-            let obj = await getEpisodeInfo(video, false);
             return {
-                episodeName: obj.found ? `S${video.season_id}, E${video.episode}: ${obj.name}` : video.name + ": S" + video.season_id + ", E" + video.episode,
-                overview: obj.overview, logo, backdrop, type: 0, next: parseInt(episode_id), name, location: gid
+                logo, backdrop, overview: info.overview, next: parseInt(episode_id), name, location: gid, type: 0,
+                episodeName: /^Episode \d+/.test(info.name) ? `${name}: S${season_id}, E${episode}`: `S${season_id}, E${episode}: ${info.name}`
             }
         }
+
+        return {error: "No such episode exists"};
     }
 }
 
@@ -164,28 +165,39 @@ class Show extends Episode {
     /**
      * @desc gets all episode of a show and it's season for display purposes
      * @param season_id
-     * @returns {Promise<{error: string}|Model[]>}
+     * @returns {Promise<{show_id, episodes: (*)}|{error: string}>}
      */
     async getEpisodes(season_id) {
-        if (this.obj.hasOwnProperty('tmdb_id')) {
-            let seasons = await Entry.findAll({
-                where: {season_id},
+        let show = await db.models.show.findOne({where: this.obj});
+        let episodes = await new Promise(resolve => {
+            resolve(Entry.findAll({
                 attributes: ['episode_id', 'episode'],
-                raw: true,
-                include: [{model: db.models.show, attributes: ['poster'], where: this.obj}]
-            });
-
-            if (seasons === null)
-                return {error: "No such season exists"};
-
-            return seasons;
-        } else
-            return await Entry.findAll({
-                attributes: ['episode_id', 'episode'],
-                where: {season_id, show_id: this.obj.id},
+                where: {season_id, show_id: show.id},
                 raw: true,
                 order: db.literal('episode_id ASC')
-            });
+            }))
+        })
+
+        if (show && episodes) {
+            let showInfo = await getDetails(0, show.tmdb_id)
+            episodes = episodes.map(item => {
+                return {
+                    season_id, tmdb_id: show.tmdb_id,
+                    backdrop: show.backdrop, episode: item.episode, logo: show.logo,
+                    episode_id: item.episode_id, name: show.name, poster: show.poster
+                }
+            })
+
+            for (let item of episodes){
+                let episode = await getEpisode(item);
+                item.overview = episode.overview && episode.overview !== ''? episode.overview: showInfo.overview;
+                item.name = episode.name ? episode.name: 'Episode ' + item.episode;
+                item.backdrop = episode.still_path ? 'https://image.tmdb.org/t/p/original'+episode.still_path: item.backdrop;
+            }
+
+            return {episodes, show_id: show.id};
+        } else
+            return {error: "No such show or season exists"};
     }
 
     /**

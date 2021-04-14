@@ -99,6 +99,10 @@ $(document).on("click", ".reset", async function (e) {
     }
 });
 
+window.onload = async () => {
+    await sFetch('update/suggest');
+}
+
 submit.onclick = async () => {
     let info = await sFetch('update/magnet/showSuggestion');
     output.innerHTML = '';

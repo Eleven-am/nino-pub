@@ -100,7 +100,7 @@ const login = () => {
                         if (check)
                             loadOpenSubs(response);
 
-                        else if (!response.data.deluge){
+                        else if (!response.data.deluge) {
                             let check = confirm('would you like to setup automatic download?, requires an active deluge web server.')
                             if (check)
                                 loadDeluge(response)
@@ -453,7 +453,7 @@ const loadDeluge = done => {
 
                 setTimeout(async () => {
                     if (done === false)
-                        await loginGoogle('homeBase');
+                        await loginGoogle();
                     else {
                         done.data.deluge = deluge;
                         await download(done.data);
@@ -465,8 +465,8 @@ const loadDeluge = done => {
     }, 1000)
 }
 
-const loginGoogle = async string => {
-    let link = await sFetch('setup/' + string);
+const loginGoogle = async () => {
+    let link = await sFetch('setup/getToken');
     document.getElementById("login-container").innerHTML = `<div id="login-info">
             <span id="google-info">I never have access to your data all information is stored on your machine</span>
             <br>
@@ -507,15 +507,8 @@ const loginGoogle = async string => {
             document.getElementById("login-container").style.opacity = "0";
             document.getElementById("loader").style.opacity = "1";
             document.getElementById("loader").style.zIndex = "999";
-            if (string === 'getToken') {
-                google_token = token;
-                setTimeout(() => buildFolders(), 1000)
-            } else {
-                homeBase = token;
-                alert('for your security, nino creates two access to your account. One as read only which you just signed in as and the other as full access which would be needed to create folders and move files')
-                alert('please sign in again when instructed');
-                setTimeout(() => loginGoogle('getToken'), 1000)
-            }
+            google_token = homeBase = token;
+            setTimeout(() => buildFolders(), 1000)
         }
     }
 }
@@ -602,7 +595,8 @@ const download = async json => {
         deleteAndRename = confirm('Would you like to allow nino delete(non media files: TXTs, SRTs, VTTs) or rename files on your google drive? This improves scan speed');
         json.deleteAndRename = deleteAndRename;
 
-    } await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({
+    }
+    await pFetch('https://nino-homebase.herokuapp.com/auth/updateUser', JSON.stringify({
         username: json.admin_mail,
         cypher,
         data: json,

@@ -135,26 +135,31 @@ class Update extends Magnet {
      * @param check
      * @returns {Promise<{previous: number, check}>}
      */
-    async handleEpisode(boolean, file, show, season, previous, season_id, check){
+    async handleEpisode(boolean, file, show, season, previous, season_id, check) {
         let ext = path.extname(file.name)
-        if ((ext === '.mp4' || ext === '.m4v') && file.mimeType !== 'application/vnd.google-apps.folder'){
+        if ((ext === '.mp4' || ext === '.m4v') && file.mimeType !== 'application/vnd.google-apps.folder') {
             let name = rename(file.name, dicDo);
             let matches = name.match(/s(?<season>\d+).*?e(?<episode>\d+)/i);
             if (matches === null) {
                 matches = name.match(/\d{2}/g);
                 let index = /^\d{2}/.test(name) || /e\d{2}.*?e\d{2}/i ? 0 : matches.length - 1;
-                matches = matches.length ? {groups: {episode: matches[index]}} : null;
+                matches = matches && matches.length ? {groups: {episode: matches[index]}} : null;
                 if (/\d{3}/.test(name) && !/^\d{2}/.test(name))
                     matches = name.match(/(?<season>\d)(?<episode>\d{2})/);
+
+                if (matches === null) {
+                    await this.renameAndScan(season.id, show, season_id);
+                    return {check, previous, break: true}
+                }
             }
 
-            if (matches){
+            if (matches) {
                 let eID = matches.groups.episode;
                 season_id = season_id === undefined && matches.groups.season ? matches.groups.season : season_id;
                 let episode_id = parseInt(`${show.id}` + season_id + eID);
 
                 if (season_id === undefined)
-                    return  {check, previous};
+                    return {check, previous};
 
                 if (previous !== episode_id) {
                     previous = episode_id;
@@ -162,7 +167,7 @@ class Update extends Magnet {
                     let checkers = check.find(item => item.episode_id === episode_id && item.gid === file.id);
                     check = check.filter(item => !(item.episode_id === episode_id && item.gid === file.id));
 
-                    if (checkers === undefined){
+                    if (checkers === undefined) {
                         let episode = {
                             show_id: show.id,
                             season_id: parseInt(season_id),
@@ -209,8 +214,8 @@ class Update extends Magnet {
         for (let i = 0; i < files.length; i++) {
             let ext = path.extname(files[i].name)
             let episode = (i + 1 > 9 ? '' : '0') + (i + 1);
-            let matches = rename(files[i].name, dicDo).match(/\d{2}/g);
-            episode = matches.length ? matches[matches.length - 1] : episode;
+            let matches = rename(files[i].name, dicDo).match(/\d{2}|\d/g);
+            episode = matches && matches.length ? matches[matches.length - 1] : episode;
             let name = `${show.name} S${temp}E${episode}${ext}`;
             await drive.renameFile(files[i].id, name);
             let obj = {
@@ -241,7 +246,10 @@ class Update extends Magnet {
         for (let item of movies) {
             let temp = await drive.getFile(item.gid);
             if (temp.hasOwnProperty('error')) {
-                await this.getTMdbMagnet('m' + item.tmdb_id)
+                let response = await this.getTMdbMagnet('m' + item.tmdb_id);
+                if (response.hasOwnProperty('url')) {
+                    await this.downloadTorrent(response.url)
+                }
                 await item.destroy();
             }
         }
@@ -270,7 +278,7 @@ class Update extends Magnet {
             }
 
             for (const season of seasons) {
-                if (season.mimeType === 'application/vnd.google-apps.folder'){
+                if (season.mimeType === 'application/vnd.google-apps.folder') {
                     let files = await drive.readFolder(season.id);
                     let matches = season.name.match(/^Season\s(?<season>\d+)/i);
 
@@ -292,17 +300,24 @@ class Update extends Magnet {
                         previous = obj.previous;
                         if (obj.hasOwnProperty('break'))
                             break;
-                    } if (check.length) {
+                    }
+                    if (check.length) {
                         for (let item of check) {
-                            let entry = await db.models.episode.findOne({where: {episode_id: item.episode_id, gid: item.gid}});
+                            let entry = await db.models.episode.findOne({
+                                where: {
+                                    episode_id: item.episode_id,
+                                    gid: item.gid
+                                }
+                            });
                             if (entry)
                                 await entry.destroy();
                         }
                     }
                 } else
-                   await this.handleEpisode(boolean, season, show, undefined, undefined,  undefined, []);
+                    await this.handleEpisode(boolean, season, show, undefined, undefined, undefined, []);
             }
-        } if (!boolean)
+        }
+        if (!boolean)
             await this.cleanHouse();
     }
 
@@ -380,7 +395,7 @@ class Update extends Magnet {
      * @returns {Promise<{ger: string, fre: string, eng: string}>}
      */
     async getSub(file_id, type) {
-        if (OpenSubtitles !== null){
+        if (OpenSubtitles !== null) {
             let obj;
             if (type === 0) {
                 let entry = await db.models.episode.findOne({
@@ -560,8 +575,16 @@ class Update extends Magnet {
      * @desc gets the next season for all possible shows on the database if available
      * @returns {Promise<void>}
      */
-    async getNextSeason(value) {
+    async getNextSeason(value, missing) {
         let shows = await db.models.show.findAll({order: [['id', 'DESC']]});
+
+        for (let item of missing) {
+            let info = (item.type ? 'm': 's') + item.tmdb_id;
+            let file = await this.getTMdbMagnet(info, value);
+            if (file.hasOwnProperty('url'))
+                await this.downloadTorrent(file.url)
+        }
+
         for (let item of shows) {
             item = item.get();
             let file = await this.getTMdbMagnet('s' + item.tmdb_id, value);
@@ -684,7 +707,7 @@ class Update extends Magnet {
         });
         let {name, year} = response;
 
-        info = info.filter(item => item.category === category && (year - 1 <= item.year && item.year <= year + 1) && item.name.levenstein(name) < 3);
+        info = info.length > 1 ? info.filter(item => item.category === category && (year - 1 <= item.year && item.year <= year + 1) && item.name.levenstein(name, 3)): info;
 
         if (info.length) {
             res = info[0].images;
@@ -724,47 +747,60 @@ class Update extends Magnet {
         for (let item of films) {
             let entry = await db.models.movie.findOne({where: {gid: item.id}});
             if (entry === null) {
-                let regex = /(?<name>^.*?)\.(?<year>\d{4}).*?\d+p[^"]+/
+                let name, year;
+                let regex = /(?<name>^.*?)\.(?<year>\d{4})\.\d+p[^"]+/
                 let matches = item.name.match(regex);
 
-                matches = matches === null ? item.name.match(/^(?<name>\d+)\.(?<year>\d{4}).*?\d+p/) : matches;
-                let name = matches !== null ? matches.groups.name : item.name;
-                let year = matches !== null ? matches.groups.year : new Date().getFullYear();
+                if (matches){
+                    name = matches.groups.name;
+                    year = matches.groups.year;
+                    name = rename(name, dicDo);
+
+                } else {
+                    name = item.name.match(/(?<name>^.*?)\d+p/);
+                    name = name && name.groups.name ? name.groups.name: item.name;
+                    name = rename(name, dicDo);
+                    year = name.match(/\d{4}/g);
+                    year = year && year.length ? year[year.length- 1] : new Date().getFullYear();
+                    name = name.replace(year, '');
+                }
 
                 year = parseInt(`${year}`);
-                name = rename(name, dicDo);
 
-                let backup, results;
-                results = (await this.searchTMDB('1', name)).results;
+                let backup = [], results;
+                results = (await u.searchTMDB('1', name)).results;
                 if (results.length < 1) continue;
                 results = results.map(item => {
                     return {
-                        name: item.title,
                         tmdb_id: item.id,
+                        name: item.title,
+                        popularity: item.popularity,
                         backdrop: item.backdrop_path,
                         year: new Date(item.release_date).getFullYear()
                     }
                 })
 
-                backup = [...results];
-                for (let i = 0; i < results.length; i++)
-                    if (!(results[i].year === year && (results[i].name.levenstein(name) < 3 || results[i].name.replace(/&/, 'and').levenstein(name) < 3)))
-                        results.splice(i, 1)
-
-                if (results.length < 1 && backup.length)
-                    results = backup.filter(item => (year - 1 <= item.year && item.year <= year + 1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
-
-                else {
-                    let temp = results.filter(item => item.year === year && item.backdrop !== null && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
-                    results = temp.length ? temp : backup.filter(item => (year - 1 <= item.year && item.year <= year + 1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
-                    results = results.length ? results : backup.filter(item => year < item.year && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
+                for (let item of results) {
+                    if ((year-1 <= item.year && item.year <= year +1) && (name.strip(item.name) || item.name.levenstein(name, 5)))
+                        backup.push(item);
                 }
 
-                if (results.length !== 1)
-                    results = results.filter(item => (year < item.year && item.year <= year + 1) && (item.name.levenstein(name) < 3 || item.name.replace(/&/, 'and').levenstein(name) < 3))
+                backup = backup.length > 1 ? backup.filter(item => item.year === year && item.name.levenstein(name, 3)): backup;
+                backup = backup.length > 1 ? backup.filter(item => item.name.levenstein(name, 2)): backup;
+                backup = backup.length > 1 ? backup.filter(item => item.name.levenstein(name, 1)): backup;
 
-                if (results.length === 1) {
-                    let obj = await this.sift(1, results[0].tmdb_id);
+                if (backup.length < 1 && year === new Date().getFullYear()){
+                    backup = results.filter(item => item.backdrop !== null).map(item => {
+                        item.drift = item.name.levenstein(name);
+                        return item
+                    }).sortKeys('drift', 'popularity', true, false);
+                    backup = [backup[0]];
+                }
+
+                [backup, results] = [results, backup];
+                if (results.length === 1 || backup.length === 1) {
+                    let obj = results.length ? results[0]: backup[0];
+                    obj = await this.sift(1, obj.tmdb_id);
                     if (obj !== false) {
                         obj = {...obj, ...subs};
                         obj.gid = item.id;
@@ -801,10 +837,37 @@ class Update extends Magnet {
     }
 
     /**
+     * @desc an auto download function that downloads missing media based on the media already on server
+     * @returns {Promise<void>}
+     */
+    async autoDownload() {
+        let movies = await db.models.movie.findAll({raw: true, attributes: ['type', 'tmdb_id']});
+        let shows = await db.models.show.findAll({raw: true, attributes: ['type', 'tmdb_id']});
+        let data = movies.concat(shows);
+
+        for (let item of data) {
+            let info = (await pageTwo(item.type, item.tmdb_id, data, 0, 2, true)).map(item => {
+                    return {
+                        name: item.title === undefined ? item.name : item.title,
+                        tmdb_id: item.id, type: !!item.title,
+                        info_id: (!!item.title ? 'm': 's') + item.id
+                    }
+                }
+            );
+
+            for (let entry of info){
+                let response = await this.getTMdbMagnet(entry.info_id);
+                if (response.hasOwnProperty('url'))
+                    await this.downloadTorrent(response.url)
+            }
+        }
+    }
+
+    /**
      * @desc checks if user has activated subtitles
      * @returns {boolean}
      */
-    checkSub () {
+    checkSub() {
         return !(OpenSubtitles === null);
     }
 }

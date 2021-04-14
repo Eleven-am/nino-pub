@@ -2,16 +2,35 @@ const express = require('express')
 const {User} = require("../../classes/auths");
 const router = express.Router()
 const Update = require("../../classes/update")
+const SpringBoard = require("../../classes/springBoard")
 const {getDetails, findPerson, getPersonInfo} = require("../../base/tmdb-hook");
 const {takeFive} = require("../../base/baseFunctions");
 const user = new User();
 const update = new Update();
+const spring = new SpringBoard();
+
+user.createAdmin()
+    .then(async boolean => {
+        if (boolean) {
+            await update.autoScan()
+            await update.scanEpisodes(true);
+        }
+    })
+    .catch(error => console.log(error))
 
 router.get('/suggest', async (req, res) => {
     let response = 'Please authenticate';
     if (await user.checkAuthorisedUser(req.session.user_id)){
         await res.json('processing');
         await update.getMagnets(req.session.user_id);
+    } else await res.json(response);
+})
+
+router.get('/autoDownload', async (req, res) => {
+    let response = 'Please authenticate';
+    if (await user.checkAuthorisedUser(req.session.user_id)){
+        await res.json('processing');
+        await update.autoDownload();
     } else await res.json(response);
 })
 
@@ -44,8 +63,10 @@ router.get('/seasonScan/:cond', async (req, res) => {
     let val = req.params.cond === 'true';
     if (await user.checkAuthorisedUser(req.session.user_id)){
         await res.json('getting ' + (val ? 'episodes' : 'new seasons and episodes') + ' for shows on the library');
+        let {missing} = await spring.getTrending();
         await update.getBackdrops();
-        await update.getNextSeason(val);
+        await update.getNextSeason(val, missing);
+
     } else await res.json(response);
 })
 
@@ -129,9 +150,9 @@ router.get("/database/:bool", async (req, res) => {
 })
 
 router.get('/:file', async (req, res) => {
-    if (await user.checkAuthorisedUser(req.session.user_id) && req.params.file !== 'auth')
+    if (await user.checkAuthorisedUser(req.session.user_id) && req.params.file !== 'auth' && !(req.params.file === 'setup' && update.checkSub() && update.delugeActive()))
         req.session.file = req.params.file;
-    res.redirect('/');
+     res.redirect('/');
 })
 
 router.get('/findPerson/:id', async (req, res) => {

@@ -6,11 +6,10 @@ body {
 }
 
 .title {
-    width: 100%;
+    width: 98%;
     text-align: center;
     background: #2b3940;
-    padding: 20px;
-    margin: 0;
+    margin: 20px auto;
     display: flex;
     justify-content: space-around;
 }
